@@ -4,11 +4,10 @@
         "server": "",
         "lint": "eslint . --ext .ts",
         "test": "jest  --silent=false --forceExit",
-        "start:dev": "nodemon ./src/http_server/index.ts",
-        "start:dev2": "nodemon --exec ts-node -r dotenv/config ./src/server/server.ts --core=single --mode=dev",
-        "start:prod": "cross-env NODE_ENV=production webpack --config ./webpack.config.js --env mode=prod && node ./deploy2/index.js core=single",
-        "start:multi": "cross-env NODE_ENV=production webpack --config ./webpack.config.js --env mode=prod && node ./deploy2/index.js core=multi",
-        "start:multidev": "nodemon --exec ts-node -r dotenv/config ./src/server/server.ts core=multi mode=dev"
+        "startOld": "node ./src/http_server/index.ts",
+        "start:nodemon": "nodemon ./src/http_server/index.ts",
+        "start": "tsx ./src/http_server/index.ts",
+        "start:dev": "tsx watch ./src/http_server/index.ts"
     },
     "devDependencies": {
         "@types/jest": "^29.5.12",
@@ -29,6 +28,7 @@
         "ts-loader": "^9.5.1",
         "ts-node": "^10.9.2",
         "ts-node-dev": "^2.0.0",
+        "tsx": "^4.7.1",
         "typescript": "^5.3.3",
         "uuid": "^9.0.1",
         "webpack": "^5.90.1",
