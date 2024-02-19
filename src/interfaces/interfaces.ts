@@ -33,10 +33,17 @@ export interface IPlayerAndRoom {
     roomId: number;
 }
 
+export interface IPlayerPlayingData {
+    playerId: number;
+    shipsLocation?: any[];
+    shipsLocationBackup?: any[];
+    shotsLocation?: any[];
+    playersResponse: string;
+}
+
 export interface IShipsPlacedRoom {
     gameId: number;
-    playersIds: number[];
-    playersResponse: string[];
+    playersData: IPlayerPlayingData[];
 }
 
 export interface IShips {
@@ -67,7 +74,7 @@ export interface IPosition {
 }
 
 export interface IAttackData {
-    positon: IPosition;
+    position: IPosition;
     currentPlayer: number;
     status:  "miss" | "killed" | "shot";
 }
@@ -77,6 +84,12 @@ export interface IAttackJson {
     y: number;
     gameId: number;
     indexPlayer: number;
+}
+
+export interface IActiveGameStats {
+    playerId: number;
+    kills: number;
+    gameId: number;
 }
 
 // this.roomsList

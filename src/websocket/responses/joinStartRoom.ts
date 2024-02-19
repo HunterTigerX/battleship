@@ -15,7 +15,7 @@ export function addUserToTheRoom(zeroId: number) {
     return JSON.stringify(result);
 }
 
-export function updateBeforeGameCreate(zeroId: number) {
+export function returnAllOpenRooms(zeroId: number) {
     // We get all open rooms data from db
     const dataArray: any[] = [];
     const openRooms = db.getOpenRooms();

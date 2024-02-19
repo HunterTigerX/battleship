@@ -1,26 +1,60 @@
-import { IUser, IWinners, IRoomUsers, IOpenRooms, IPlayerAndRoom, IShipsPlacedRoom, IPlayersTurns } from '../interfaces/interfaces';
+import {
+    IUser,
+    IWinners,
+    IRoomUsers,
+    IOpenRooms,
+    IPlayerAndRoom,
+    IShipsPlacedRoom,
+    IPlayersTurns,
+    IPosition,
+    IPlayerPlayingData,
+    IActiveGameStats,
+} from '../interfaces/interfaces';
+import { fillPlayersShipsToArray } from '../websocket/responses/startGame';
 
 export class InMemoryDB {
+    clients: any[] = [];
     private users: IUser[] = [];
     online: boolean = false;
     currentPlayers: number = 0;
     winners: IWinners[] = [];
-    roomsList: IOpenRooms[] = []; // List of open rooms
-    openRoomPlayers: IPlayerAndRoom[] = [];
-    roomsWithShips: IShipsPlacedRoom[] = [];
-    playersTurns: IPlayersTurns[] = [];
+    roomsList: IOpenRooms[] = []; // List of open rooms  // empty after game over
+    openRoomPlayers: IPlayerAndRoom[] = []; // empty after game over
+    roomsWithShips: IShipsPlacedRoom[] = []; // empty after game over
+    playersTurns: IPlayersTurns[] = []; // empty after game over
+    kills: IActiveGameStats[] = [];
+
+    player1Ships: any[] = [];
+    player2Ships: any[] = [];
+    player1ShipsBackup: any[] = [];
+    player2ShipsBackup: any[] = [];
+    player1ShotsLocation: any[] = [];
+    player2ShotsLocation: any[] = [];
 
     // on game end or dc remove game from playersTurns
 
-    rooms: IOpenRooms[] = [];
-    waitingUser: any[] = [];
-    usersInRoom: number[] = [];
-    player1Ships: any[] = [];
-    player2Ships: any[] = [];
-    player1ShotsLocation: any[] = [];
-    player2ShotsLocation: any[] = [];
-    lastShot: string = '';
-    shipResponse: string = '';
+    // rooms: IOpenRooms[] = [];
+    // waitingUser: any[] = [];
+    // usersInRoom: number[] = [];
+    // lastShot: string = '';
+    // shipResponse: string = '';
+
+    saveClientsData(playerId: number, clientWS: any): void {
+        const newClient = {
+            clientId: playerId,
+            clientData: clientWS,
+        };
+        this.clients.push(newClient);
+    }
+
+    removeClientsData(playerId: number): void {
+        this.clients.filter((client) => client.clientId === playerId);
+    }
+
+    findClientsData(playerId: number) {
+        const client = this.clients.find((client) => client.clientId === playerId);
+        return client.clientData;
+    }
 
     checkUser(id: number, username: string, password: string): string {
         const user = this.users.find((user) => user.username === username);
@@ -67,17 +101,17 @@ export class InMemoryDB {
         return this.currentPlayers;
     }
 
-    updateWinners(winnerData: IWinners): void {
+    updateWinners(playerId: number): void {
+        const userName = this.getUsername(playerId);
         const checkWinner = this.winners.find((user) => {
-            if (user.name === winnerData.name) {
+            if (user.name === userName) {
                 user.wins += 1;
-                return user;
             }
         });
         if (!checkWinner) {
             // We add new winner
             const newWinner: IWinners = {
-                name: winnerData.name,
+                name: userName,
                 wins: 1,
             };
             this.winners.push(newWinner);
@@ -177,30 +211,40 @@ export class InMemoryDB {
         }
     }
 
-    closeRoom(roomId: number):void {
-        this.roomsList = this.roomsList.filter((room) => (room.roomId !== roomId));
+    closeRoom(roomId: number): void {
+        this.roomsList = this.roomsList.filter((room) => room.roomId !== roomId);
     }
 
-    addPlayerShips(gameId: number, playerId: number, response: string) {
-        const currentRoom = this.roomsWithShips.find(room => room.gameId === gameId);
-        let playersReturnedShips = 0;
+    addPlayerShips(gameId: number, playerId: number, response: string, ships: any[]): boolean {
+        const currentRoom = this.roomsWithShips.find((room) => room.gameId === gameId);
         if (!currentRoom) {
+            // First player in the room
+            const player1Data = {
+                playerId: playerId,
+                playersResponse: response,
+                shotsLocation: [],
+            };
             this.roomsWithShips.push({
                 gameId: gameId,
-                playersIds: [playerId],
-                playersResponse: [response]
+                playersData: [player1Data],
             });
-            playersReturnedShips = 1;
+            fillPlayersShipsToArray(ships, playerId, gameId);
+            return false;
         } else {
-            currentRoom.playersIds.push(playerId)
-            currentRoom.playersResponse.push(response)
-            playersReturnedShips = 2;
+            // Second player joined the room
+            const player2Data = {
+                playerId: playerId,
+                playersResponse: response,
+                shotsLocation: [],
+            };
+            currentRoom.playersData.push(player2Data);
+            fillPlayersShipsToArray(ships, playerId, gameId);
+            return true;
         }
-        return playersReturnedShips;
     }
 
     returnPlayersShipsData(gameId: number): IShipsPlacedRoom | undefined {
-        const currentGameData = this.roomsWithShips.find(game => game.gameId === gameId);
+        const currentGameData = this.roomsWithShips.find((game) => game.gameId === gameId);
         return currentGameData;
     }
 
@@ -209,13 +253,13 @@ export class InMemoryDB {
             gameId: gameId,
             players: players,
             currentPlayer: playerId,
-        }
-        this.playersTurns.push(newGameData)
+        };
+        this.playersTurns.push(newGameData);
     }
 
     checkPlayerTurn(gameId: number, playerId: number): boolean {
         let isPlayersTurn = true;
-        const currentGameData = this.playersTurns.find(game => game.gameId === gameId);
+        const currentGameData = this.playersTurns.find((game) => game.gameId === gameId);
         if (currentGameData) {
             if (currentGameData.currentPlayer !== playerId) {
                 isPlayersTurn = false;
@@ -224,144 +268,106 @@ export class InMemoryDB {
         return isPlayersTurn;
     }
 
-    returnCurrentGamesPlayers(gameId: number): number[] | undefined {
-        let result = undefined;
-        const currentGameData = this.roomsWithShips.find(game => game.gameId === gameId);
+    returnCurrentGamesPlayers(gameId: number): IPlayerPlayingData[] | undefined {
+        const currentGameData = this.roomsWithShips.find((game) => game.gameId === gameId);
         if (currentGameData) {
-            result = currentGameData.playersIds;
+            return currentGameData.playersData;
         }
-        return result;
     }
 
-    switchTurn(gameId: number): number {
-        let nextPlayer = 999;
-        const currentGameData = this.playersTurns.find(game => game.gameId === gameId);
+    switchTurn(gameId: number) {
+        const currentGameData = this.playersTurns.find((game) => game.gameId === gameId);
         if (currentGameData) {
             const lastTurnPlayer = currentGameData.currentPlayer;
-            const nowTurnGoesTo = currentGameData.players[0] === lastTurnPlayer ? currentGameData.players[1] : currentGameData.players[0]
+            const nowTurnGoesTo =
+                currentGameData.players[0] === lastTurnPlayer ? currentGameData.players[1] : currentGameData.players[0];
             currentGameData.currentPlayer = nowTurnGoesTo;
-            nextPlayer = nowTurnGoesTo;
+            return nowTurnGoesTo;
         }
-        return nextPlayer;
     }
 
+    getShotsLocation(playerId: number, roomIndex: number) {
+        const currentRoom = this.roomsWithShips.find((room) => room.gameId === roomIndex);
+        if (currentRoom) {
+            const playerShots = currentRoom.playersData.find((player) => player.playerId === playerId);
+            if (playerShots) {
+                return playerShots.shotsLocation;
+            }
+        }
+    }
 
+    saveShotsLocation(location: IPosition, playerId: number, roomIndex: number) {
+        const currentRoom = this.roomsWithShips.find((room) => room.gameId === roomIndex);
+        if (currentRoom) {
+            const playerShots = currentRoom.playersData.find((player) => player.playerId === playerId);
+            if (playerShots) {
+                playerShots.shotsLocation?.push(location);
+            }
+        }
+    }
 
+    saveShipsLocation(ships: any[], playerId: number, roomIndex: number) {
+        const currentRoom = this.roomsWithShips.find((room) => room.gameId === roomIndex);
+        if (currentRoom) {
+            const playerShips = currentRoom.playersData.find((player) => player.playerId === playerId);
+            if (playerShips) {
+                playerShips.shipsLocation = [...ships];
+            }
+        }
+    }
 
+    getShipsLocation(playerId: number, roomIndex: number) {
+        const currentRoom = this.roomsWithShips.find((room) => room.gameId === roomIndex);
+        if (currentRoom) {
+            const playerShips = currentRoom.playersData.find((player) => player.playerId === playerId);
+            if (playerShips) {
+                return playerShips.shipsLocation;
+            }
+        }
+    }
 
+    saveShipsLocationBackup(ships: string, playerId: number, roomIndex: number) {
+        const currentRoom = this.roomsWithShips.find((room) => room.gameId === roomIndex);
+        if (currentRoom) {
+            const playerShips = currentRoom.playersData.find((player) => player.playerId === playerId);
+            if (playerShips) {
+                playerShips.shipsLocationBackup = [...JSON.parse(ships)];
+            }
+        }
+    }
+    getShipsLocationBackup(playerId: number, roomIndex: number) {
+        const currentRoom = this.roomsWithShips.find((room) => room.gameId === roomIndex);
+        if (currentRoom) {
+            const playerShips = currentRoom.playersData.find((player) => player.playerId === playerId);
+            if (playerShips) {
+                return playerShips.shipsLocationBackup;
+            }
+        }
+    }
 
+    countKils(playerId: number, roomId: number): number | undefined {
+        const playerData = this.kills.find((player) => player.playerId === playerId);
+        if (playerData) {
+            // add kill
+            playerData.kills += 1;
+            return playerData.kills;
+        } else {
+            // first kill
+            const result = {
+                playerId: playerId,
+                kills: 1,
+                gameId: roomId,
+            };
+            this.kills.push(result);
+            return 1;
+        }
+    }
 
+    disqualification(playerId: number) {
+        // check if someone DC'd if he was in the game
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // add(user: IUser): void {
-    //     this.users.push(user);
-    // }
-
-    // getAll(): IUser[] {
-    //     return this.users;
-    // }
-
-    // createRoom() {
-    //     // this.rooms.push(this.rooms.length);
-    // }
-
-    // getRoom() {
-    //     return this.rooms;
-    // }
-
-    // userInTheRoom(userWaiting: any[]) {
-    //     this.waitingUser = userWaiting;
-    // }
-
-    // getWaitingUser() {
-    //     return this.waitingUser;
-    // }
-
-    // addUsersToTheRoom(index: number) {
-    //     if (!this.usersInRoom.includes(index)) {
-    //         this.usersInRoom.push(index);
-    //     }
-    // }
-    // getUsersInRoom(index: number) {
-    //     return this.usersInRoom.includes(index);
-    // }
-    // usersInTheRoom() {
-    //     return this.usersInRoom;
-    // }
-    // saveShipsLocation(ships: any[], playerIndex: number) {
-    //     if (playerIndex === 0) {
-    //         this.player1Ships = ships;
-    //     }
-    //     if (playerIndex === 1) {
-    //         this.player2Ships = ships;
-    //     }
-    // }
-    // getPlayerShipsLocation(playerIndex: number) {
-    //     if (playerIndex === 0) {
-    //         return this.player1Ships;
-    //     }
-    //     if (playerIndex === 1) {
-    //         return this.player2Ships;
-    //     }
-    // }
-    // saveShotsLocation(location: Position, playerIndex: number) {
-    //     if (playerIndex === 0) {
-    //         this.player1ShotsLocation.push(location);
-    //     }
-    //     if (playerIndex === 1) {
-    //         this.player2ShotsLocation.push(location);
-    //     }
-    // }
-    // getShotsLocation(playerIndex: number) {
-    //     if (playerIndex === 0) {
-    //         return this.player1ShotsLocation;
-    //     }
-    //     if (playerIndex === 1) {
-    //         return this.player2ShotsLocation;
-    //     }
-    // }
-
-    // setLastShot(status: string) {
-    //     this.lastShot = status;
-    // }
-    // getLastShot() {
-    //     return this.lastShot;
-    // }
-
-    // setCurrentPlayer(playerId: number) {
-    //     // this.currentPlayer = playerId;
-    // }
-
-    // getCurrentPlayer() {
-    //     // return this.currentPlayer;
-    // }
-
-    // setShipResponse(data: string) {
-    //     this.shipResponse = data;
-    // }
-
-    // getShipResponse() {
-    //     return this.shipResponse;
-    // }
+    gameEnded(gameId: number): void {
+        
+    }
 }

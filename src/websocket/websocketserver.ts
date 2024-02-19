@@ -4,36 +4,35 @@ import { loginResponseObject } from './responses/loginResponse';
 import { broadcastData } from './broadcasts/broadcast';
 import { firstRoomResponse, createEmptyRoomResponse, returnOpenedRoomResponse } from './responses/updateRoom';
 import { updateWinnersResponse } from './responses/updateWinnersResponse';
-import { returnRandomNumber } from './scripts/randomNum';
-import { addUserToTheRoom, updateBeforeGameCreate, gameCreate } from './responses/joinStartRoom';
+import { returnRandomNumber } from './functions/randomNum';
+import { addUserToTheRoom, returnAllOpenRooms, gameCreate } from './responses/joinStartRoom';
 import { createGameResponse } from './responses/startGame';
 import { turn } from './responses/turn';
-import { attackShipsResponse } from './responses/attack';
+import { attack } from './battles/battle';
 
+// import { alertMessage } from './error';
 import { IAddShipsJson, IShips } from '../interfaces/interfaces';
 // Interfaces are above
-
-
-// import { addShipsResponse } from './addShips';
-// import { alertMessage } from './error';
-// import { checkHit, checkAttack } from './checkIfShotTheSamePosition';
 
 export const wss = new WebSocket.Server({ port: 3000 });
 let clients = new Array();
 export const db = new InMemoryDB();
 
-
 wss.on('connection', (ws, request) => {
     clients.push(ws);
-    const playerId = clients.indexOf(ws);
+    // const playerId = clients.indexOf(ws);
+    const playerId = returnRandomNumber(10000000);
     const zeroId = 0;
+    db.saveClientsData(playerId, ws);
+
+    // const playerWsIndex = clients.indexOf(ws);
 
     ws.on('message', async (message: any, isBinary) => {
         const stringData = isBinary ? Buffer.from(message).toString('utf8') : message.toString();
         const jsonData = JSON.parse(stringData);
         const typeOfRequest = jsonData.type;
 
-        console.log(typeOfRequest)
+        console.log(typeOfRequest);
 
         if (typeOfRequest === 'reg') {
             const userData = JSON.parse(jsonData.data);
@@ -50,75 +49,80 @@ wss.on('connection', (ws, request) => {
             const currentPlayers = db.getCurrentPlayers();
 
             // responding to registration
-            broadcastData('back', playerId, clients, responseObject)
-            const currentOpenRooms = db.getOpenRooms().length;
-            if (currentPlayers === 1) {
-                // updating rooms and winners for solo player
-                if (currentOpenRooms >= 1) {
-                // There are opened rooms
-                    const updateRoomResponse = returnOpenedRoomResponse(zeroId);
-                    broadcastData('back', playerId, clients, updateRoomResponse);
-                } else {
-                    // There were no opened rooms
-                    const updateRoomResponse = firstRoomResponse(zeroId);
-                    broadcastData('back', playerId, clients, updateRoomResponse);
-                }
-                const winnersResponse = updateWinnersResponse(zeroId);
-                broadcastData('back', playerId, clients, winnersResponse);
-            } else if (currentPlayers > 1) {
+            broadcastData('back', playerId, clients, responseObject);
+            // const currentOpenRooms = db.getOpenRooms().length;
+            // if (currentPlayers === 1) {
+            //     // updating rooms and winners for solo player
+            //     if (currentOpenRooms >= 1) {
+            //     // There are opened rooms
+            //         const updateRoomResponse = returnOpenedRoomResponse(zeroId);
+            //         broadcastData('back', playerId, clients, updateRoomResponse);
+            //     } else {
+            //         // There were no opened rooms
+            //         const updateRoomResponse = firstRoomResponse(zeroId);
+            //         broadcastData('back', playerId, clients, updateRoomResponse);
+            //     }
+            //     const winnersResponse = updateWinnersResponse(zeroId);
+            //     broadcastData('back', playerId, clients, winnersResponse);
+            // } else if (currentPlayers > 1) {
 
-                if (currentOpenRooms >= 1) {
-                    // We return all open rooms to all players
-                    const updateRoomResponse = returnOpenedRoomResponse(zeroId);
-                    broadcastData('everyone-same', playerId, clients, updateRoomResponse);
-                } else if (currentOpenRooms === 0) {
-                    // There are no open rooms
-                    const updateRoomResponse = firstRoomResponse(zeroId);
-                    broadcastData('everyone-same', playerId, clients, updateRoomResponse);
-                }
-                const winnersResponse = updateWinnersResponse(zeroId);
-                broadcastData('everyone-same', playerId, clients, winnersResponse);
-            }
+            //     if (currentOpenRooms >= 1) {
+            //         // We return all open rooms to all players
+            //         const updateRoomResponse = returnOpenedRoomResponse(zeroId);
+            //         broadcastData('everyone-same', playerId, clients, updateRoomResponse);
+            //     } else if (currentOpenRooms === 0) {
+            //         // There are no open rooms
+            //         const updateRoomResponse = firstRoomResponse(zeroId);
+            //         broadcastData('everyone-same', playerId, clients, updateRoomResponse);
+            //     }
+            //     const winnersResponse = updateWinnersResponse(zeroId);
+            //     broadcastData('everyone-same', playerId, clients, winnersResponse);
+            // }
 
+            const winnersResponse = updateWinnersResponse(zeroId);
+            broadcastData('everyone-same', playerId, clients, winnersResponse);
+            const updateRoomResponse = returnAllOpenRooms(zeroId);
+            broadcastData('everyone-same', playerId, clients, updateRoomResponse);
         }
-
 
         if (typeOfRequest === 'create_room') {
             const maxRoomNumber: number = 5;
             const currentRooms = db.getOpenRooms().length;
             if (maxRoomNumber > currentRooms) {
                 let newRoomNumber = returnRandomNumber(maxRoomNumber); // Generating new room number
-                   while (db.checkOpenRooms(newRoomNumber)) { // Checking if there is a room with this number
-                    newRoomNumber = returnRandomNumber(maxRoomNumber)
+                while (db.checkOpenRooms(newRoomNumber)) {
+                    // Checking if there is a room with this number
+                    newRoomNumber = returnRandomNumber(maxRoomNumber);
                 }
-    
-                let newRoomData = 
-                {
-                        roomId: newRoomNumber,
-                        roomUsers: [],
-                    }
-                ;
 
+                let newRoomData = {
+                    roomId: newRoomNumber,
+                    roomUsers: [],
+                };
                 db.saveOpenRoom(newRoomData);
 
                 const currentPlayers = db.getCurrentPlayers();
 
                 if (currentPlayers === 1) {
                     // We have one player and room data is sending back to the single user
-                    if (currentRooms > 0) { // There are open rooms
+                    if (currentRooms > 0) {
+                        // There are open rooms
                         const updateRoomResponse = returnOpenedRoomResponse(zeroId);
                         broadcastData('back', playerId, clients, updateRoomResponse);
-                    } else if (currentRooms === 0) {  // There are no open rooms
+                    } else if (currentRooms === 0) {
+                        // There are no open rooms
                         const updateRoomResponse = createEmptyRoomResponse(newRoomNumber, zeroId);
                         broadcastData('back', playerId, clients, updateRoomResponse);
                     }
-                    // 
+                    //
                 } else {
                     // We have many players and new rooms data is broadcasting to every user
-                    if (currentRooms > 0) { // There are open rooms
+                    if (currentRooms > 0) {
+                        // There are open rooms
                         const updateRoomResponse = returnOpenedRoomResponse(zeroId);
                         broadcastData('everyone-same', playerId, clients, updateRoomResponse);
-                    } else if (currentRooms === 0) {  // There are no open rooms
+                    } else if (currentRooms === 0) {
+                        // There are no open rooms
                         const updateRoomResponse = createEmptyRoomResponse(newRoomNumber, zeroId);
                         broadcastData('everyone-same', playerId, clients, updateRoomResponse);
                     }
@@ -127,12 +131,9 @@ wss.on('connection', (ws, request) => {
             } else {
                 // `Max room number reached. Current limit of rooms is ${maxRoomNumber}`
             }
-         }
+        }
 
-
-
-         if (typeOfRequest === 'add_user_to_room') { 
-            // !!! Add switching room option later
+        if (typeOfRequest === 'add_user_to_room') {
             // When 1 player joins, we update rooms
             // When 2 player joins the same room, we start the game
             // Create games have different playerId's and 2 different responses
@@ -151,7 +152,7 @@ wss.on('connection', (ws, request) => {
                 if (usersInTheRoom === 0) {
                     // There were no users in the room
                     db.addUserToTheOpenRoom(playerId, roomToJoin); // We add player to the room in db
-                    const addUserToTheRoomResponce = addUserToTheRoom(zeroId)// We update rooms for other players
+                    const addUserToTheRoomResponce = addUserToTheRoom(zeroId); // We update rooms for other players
                     broadcastData('everyone-same', playerId, clients, addUserToTheRoomResponce);
                 } else if (usersInTheRoom.length === 1) {
                     // ther were one user waiting in the room so we can start the game
@@ -162,125 +163,71 @@ wss.on('connection', (ws, request) => {
                     db.removePlayerFromTheRooms(playerWaitingId);
                     db.removePlayerFromTheRooms(playerId);
                     db.closeRoom(roomToJoin);
-                    const updateRoomResponse = updateBeforeGameCreate(zeroId);
+                    const updateRoomResponse = returnAllOpenRooms(zeroId);
+                    broadcastData('back', playerWaitingId, clients, playerOneResponse);
+                    broadcastData('back', playerId, clients, playerTwoResponse);
+
                     broadcastData('everyone-same', playerId, clients, updateRoomResponse);
-                    broadcastData('back', playerWaitingId, clients, playerOneResponse); // Check that playerWaitingId choose correct player
-                    broadcastData('back', playerId, clients, playerTwoResponse);                  
                 }
             } else {
                 // Current player is waiting already in this open room
             }
         }
 
-                if (typeOfRequest === 'add_ships') {
+        if (typeOfRequest === 'add_ships') {
+            const jsonDataShips: IAddShipsJson = JSON.parse(jsonData.data);
+            const gameId = jsonDataShips.gameId;
+            const shipsArray: IShips[] = jsonDataShips.ships;
 
-                    const jsonDataShips: IAddShipsJson = JSON.parse(jsonData.data)
-                    const gameId = jsonDataShips.gameId;
-                    const indexPlayer = jsonDataShips.indexPlayer;
-                    const shipsArray: IShips[] = jsonDataShips.ships;
-                    const gameStartResponse: string = createGameResponse(indexPlayer, shipsArray, zeroId)
+            const gameStartResponse: string = createGameResponse(playerId, shipsArray, zeroId, gameId);
+            const playersInTheRoomReady = db.addPlayerShips(gameId, playerId, gameStartResponse, shipsArray);
 
-                    const playersInTheRoomReady: number = db.addPlayerShips(gameId, indexPlayer, gameStartResponse)
+            if (playersInTheRoomReady) {
+                const shipsData = db.returnPlayersShipsData(gameId);
 
-                    if (playersInTheRoomReady === 2) {
-                        const shipsData = db.returnPlayersShipsData(gameId);
-                        // We return players count in the room who placed ships
-                        if (shipsData) {
+                // We return players count in the room who placed ships
+                if (shipsData) {
+                    const playersData = shipsData.playersData; // array of players data
 
-                            const playerOneId = shipsData.playersIds[0];
-                            const playerOneResponse = shipsData.playersResponse[0];
-                            const playerTwoId = shipsData.playersIds[1];
-                            const playerTwoResponse = shipsData.playersResponse[1];
-                        
-                            broadcastData('back', playerOneId, clients, playerOneResponse); // Check that playerWaitingId choose correct player
-                            broadcastData('back', playerTwoId, clients, playerTwoResponse); // Check that playerWaitingId choose correct player
-                            const firstTurnPlayer = returnRandomNumber(2); // return 1 or 2
-                            const firstTurn = firstTurnPlayer === 1 ? playerOneId : playerTwoId;
-                            const playersTurnEndResponse = turn(zeroId, firstTurn);
-                            db.startFirstTurn(gameId, firstTurn, [playerOneId, playerTwoId])
-                            broadcastData('back', playerOneId, clients, playersTurnEndResponse); // Check that playerWaitingId choose correct player
-                            broadcastData('back', playerTwoId, clients, playersTurnEndResponse); // Check that playerWaitingId choose correct player
-                        } else {
-                            // something went wrong
-                        }
-                    } else {
-                        // waiting for the second player in the room
+                    const playerTwoData = playersData.find((playersData) => playersData.playerId === playerId); // Who connected last
+                    const playerOneData = playersData.filter((playerData) => playerData.playerId !== playerId)[0]; // Who connected first
+
+                    if (playerOneData && playerTwoData) {
+                        const playerOneId = playerOneData.playerId;
+                        const playerOneResponse = playerOneData.playersResponse;
+
+                        const playerTwoId = playerTwoData.playerId;
+                        const playerTwoResponse = playerTwoData.playersResponse;
+
+                        broadcastData('back', playerOneId, clients, playerOneResponse);
+                        broadcastData('back', playerTwoId, clients, playerTwoResponse);
+
+                        const firstTurnPlayer = returnRandomNumber(2); // return 1 or 2
+                        const firstTurn = firstTurnPlayer === 1 ? playerOneId : playerTwoId;
+                        const playersTurnEndResponse = turn(zeroId, firstTurn);
+                        db.startFirstTurn(gameId, firstTurn, [playerOneId, playerTwoId]);
+
+                        broadcastData('back', playerOneId, clients, playersTurnEndResponse);
+                        broadcastData('back', playerTwoId, clients, playersTurnEndResponse);
                     }
-        }
-
-
-
-        
-        if (typeOfRequest === 'attack') {
-            const attackData = JSON.parse(jsonData.data);
-            const gameId = attackData.gameId;
-            const indexPlayer = attackData.indexPlayer;
-            const isPlayersTurn = db.checkPlayerTurn(gameId, indexPlayer)
-            if (isPlayersTurn) {
-                const attackResponse = attackShipsResponse(attackData, zeroId, "miss")
-                const currentRoomUsersIds = db.returnCurrentGamesPlayers(gameId);
-                if (currentRoomUsersIds) {
-                    const secondPlayer = currentRoomUsersIds.filter((playerId) => playerId !== indexPlayer)[0];
-                    const nextTurnPlayer = db.switchTurn(gameId);
-                    const playersTurnEndResponse = turn(zeroId, nextTurnPlayer);
-
-                    broadcastData('back', indexPlayer, clients, attackResponse); // Check that playerWaitingId choose correct player
-                    broadcastData('back', secondPlayer, clients, attackResponse); // Check that playerWaitingId choose correct player
-                    
-                    broadcastData('back', indexPlayer, clients, playersTurnEndResponse); // Check that playerWaitingId choose correct player
-                    broadcastData('back', secondPlayer, clients, playersTurnEndResponse); // Check that playerWaitingId choose correct player
-                    console.log('congrats')
-
+                } else {
+                    // something went wrong
                 }
-
-                // broadcastData('back', playerTwoId, clients, playersTurnEndResponse); // Check that playerWaitingId choose correct player
+            } else {
+                // waiting for the second player in the room
             }
         }
 
+        if (typeOfRequest === 'randomAttack') {
+            attack(jsonData, playerId, zeroId, clients, 'random');
+        }
 
+        if (typeOfRequest === 'attack') {
+            attack(jsonData, playerId, zeroId, clients, 'manual');
+        }
 
         // End of messaging
-    })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-        // }
-
-        // finish
-        // update_winners
-    // });
+    });
 
     ws.on('close', () => {
         // Handle WebSocket connection close

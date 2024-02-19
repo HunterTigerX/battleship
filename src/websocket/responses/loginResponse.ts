@@ -17,7 +17,7 @@ export function loginResponseObject(
         data: JSON.stringify(newData),
         id: zeroId,
     };
-    
+
     return JSON.stringify(response);
 }
 
