@@ -1,4 +1,4 @@
-import { db } from '../websocketserver';
+import { db } from '../../websocketserver';
 
 export function updateWinnersResponse(zeroId: number) {
     const newData = db.getWinners();
@@ -8,10 +8,9 @@ export function updateWinnersResponse(zeroId: number) {
         data: JSON.stringify(newData),
         id: zeroId,
     };
-    
+
     return JSON.stringify(response);
 }
-
 
 // 	->
 // 	{

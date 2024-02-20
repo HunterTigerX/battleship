@@ -1,8 +1,16 @@
 export interface IUser {
-    id: number;
-    username: string;
-    password: string;
+    userId: number;
+    userType: 'player' | 'bot';
+    userDataWs: any;
+    username: string | undefined;
+    password: string | undefined;
     online: boolean;
+    inTheRoom?: number | undefined; // same as gameID
+    playWithBot?: boolean;
+    shipsLocation?: any[];
+    shipsLocationBackup?: any[];
+    shotsLocation?: any[];
+    playersResponse?: string;
 }
 
 export interface IWinners {
@@ -12,25 +20,20 @@ export interface IWinners {
 
 export interface IRoomUsers {
     name: string;
-    index: number;
+    index: number; // player id
 }
 
-export interface IOpenRooms {
+export interface IOpenGames {
     roomId: number;
     roomUsers: IRoomUsers[];
 }
 
-export interface IAddUserToRoomRequest {
-    type: 'add_user_to_room';
+export interface IAddUserToGameRequest {
+    type: 'add_user_to_game';
     data: {
-        indexRoom: number;
+        indexGame: number;
     };
     id: number;
-}
-
-export interface IPlayerAndRoom {
-    playerId: number;
-    roomId: number;
 }
 
 export interface IPlayerPlayingData {
@@ -39,9 +42,10 @@ export interface IPlayerPlayingData {
     shipsLocationBackup?: any[];
     shotsLocation?: any[];
     playersResponse: string;
+    gameType?: string;
 }
 
-export interface IShipsPlacedRoom {
+export interface IShipsPlacedGame {
     gameId: number;
     playersData: IPlayerPlayingData[];
 }
@@ -52,7 +56,7 @@ export interface IShips {
         y: number;
     };
     direction: boolean;
-    type: 'huge' | 'large' | 'medium' | 'small';
+    type: string;
     length: number;
 }
 
@@ -76,7 +80,7 @@ export interface IPosition {
 export interface IAttackData {
     position: IPosition;
     currentPlayer: number;
-    status:  "miss" | "killed" | "shot";
+    status: 'miss' | 'killed' | 'shot';
 }
 
 export interface IAttackJson {
@@ -92,5 +96,10 @@ export interface IActiveGameStats {
     gameId: number;
 }
 
-// this.roomsList
-// this.openRoomPlayers
+export interface IWaitingRoom {
+    room: number;
+    players: any[];
+}
+
+// this.gamesList
+// this.openGamePlayers

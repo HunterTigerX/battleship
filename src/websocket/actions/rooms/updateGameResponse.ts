@@ -1,40 +1,17 @@
-import { db } from '../websocketserver';
+import { db } from '../../websocketserver';
 
-export function firstRoomResponse(zeroId: number) {
+export function returnOpenGamesResponse(zeroId: number) {
+    const dataArray: any[] = [];
+    const openRooms = db.getOpenGames();
+    dataArray.push(...openRooms);
+
     const result = {
         type: 'update_room',
-        data: JSON.stringify([]),
+        data: JSON.stringify(dataArray),
         id: zeroId,
     };
 
     return JSON.stringify(result);
-}
-
-export function createEmptyRoomResponse(roomId: number, zeroId: number) {
-    const dataArray = [
-        {
-            roomId: roomId,
-            roomUsers: [],
-        },
-    ];
-
-    return JSON.stringify({
-        type: 'update_room',
-        data: JSON.stringify(dataArray),
-        id: zeroId,
-    });
-}
-
-export function returnOpenedRoomResponse(zeroId: number) {
-    const dataArray: any[] = [];
-    const openRooms = db.getOpenRooms();
-    dataArray.push(...openRooms);
-
-    return JSON.stringify({
-        type: 'update_room',
-        data: JSON.stringify(dataArray),
-        id: zeroId,
-    });
 }
 
 // Create new room (create game room and add yourself there)

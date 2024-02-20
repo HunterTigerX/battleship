@@ -1,4 +1,4 @@
-import { db } from '../websocketserver';
+import { db } from '../../websocketserver';
 
 export function turn(zeroId: number, playerIndex: number) {
     const currentPlayerObj = {

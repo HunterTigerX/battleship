@@ -1,13 +1,13 @@
 export function loginResponseObject(
     messageData: any,
-    userIndex: number,
+    userId: number,
     error: boolean,
     errorText: string,
     zeroId: number
 ) {
     const newData = {
         name: messageData.name,
-        index: userIndex,
+        index: userId,
         error: error,
         errorText: errorText,
     };

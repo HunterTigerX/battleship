@@ -1,8 +1,6 @@
-import { db } from '../websocketserver';
 import { IAttackData, IPosition, IAttackJson } from '../../interfaces/interfaces';
 
 export function attackShipsResponse(attackData: IAttackJson, zeroId: number, shotStatus: 'miss' | 'killed' | 'shot') {
-
     const position: IPosition = {
         x: attackData.x,
         y: attackData.y,
@@ -23,7 +21,7 @@ export function attackShipsResponse(attackData: IAttackJson, zeroId: number, sho
     return JSON.stringify(result);
 }
 
-export function attackShipsResponseEmpty(posX: number, posY: number, player: number) {
+export function shootAroundTheShip(posX: number, posY: number, player: number) {
     const position: IPosition = {
         x: posX,
         y: posY,
