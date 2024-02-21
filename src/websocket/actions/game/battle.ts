@@ -54,8 +54,8 @@ function attackByBot(
         // Ship is wounded, you can continue to shoot
         const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
         const playersTurnEndResponse = turn(zeroId, botId);
-        broadcastData('back', clients, attackResponse, humanOpponent);
-        broadcastData('back', clients, playersTurnEndResponse, humanOpponent);
+        broadcastData('back', attackResponse, humanOpponent);
+        broadcastData('back', playersTurnEndResponse, humanOpponent);
         let [botPositionX, botPositionY] = generateRandomPosition(botId);
         const botJsonData = generateBotJson(botPositionX, botPositionY, gameId, botId);
         attack(botJsonData, humanOpponent, zeroId, clients, 'manual', botId);
@@ -64,12 +64,12 @@ function attackByBot(
         const playerTurn = db.switchTurn(gameId); // we switch players
         const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
         const playersTurnEndResponse = turn(zeroId, playerTurn!);
-        broadcastData('back', clients, attackResponse, humanOpponent);
-        broadcastData('back', clients, playersTurnEndResponse, humanOpponent);
+        broadcastData('back', attackResponse, humanOpponent);
+        broadcastData('back', playersTurnEndResponse, humanOpponent);
     } else {
         // Ship is killed, lets clear empty spaces and continue to shoot
         const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
-        broadcastData('back', clients, attackResponse, humanOpponent);
+        broadcastData('back', attackResponse, humanOpponent);
         const enemyShipParts = db.getShipsLocationBackup(humanOpponent);
         let fullShip;
         enemyShipParts?.map((arrayInside: any, index: number) => {
@@ -86,10 +86,10 @@ function attackByBot(
         const botKills = db.countKils(botId, gameId); // Check if we won
         if (botKills === 10) {
             const endGame = endGameResponse(botId, zeroId);
-            broadcastData('back', clients, endGame, humanOpponent);
+            broadcastData('back', endGame, humanOpponent);
             db.updateWinners(botId);
             const winnersResponse = updateWinnersResponse(zeroId);
-            broadcastData('back', clients, winnersResponse, humanOpponent);
+            broadcastData('back', winnersResponse, humanOpponent);
             db.gameEnded(gameId, botId, humanOpponent);
         } else {
             let [botPositionX, botPositionY] = generateRandomPosition(botId);
@@ -144,10 +144,10 @@ function twoPlayersGameAttacks(
                 const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
                 const playersTurnEndResponse = turn(zeroId, playerTurn);
 
-                broadcastData('back', clients, attackResponse, playerId);
-                broadcastData('back', clients, attackResponse, secondPlayerId);
-                broadcastData('back', clients, playersTurnEndResponse, playerId);
-                broadcastData('back', clients, playersTurnEndResponse, secondPlayerId);
+                broadcastData('back', attackResponse, playerId);
+                broadcastData('back', attackResponse, secondPlayerId);
+                broadcastData('back', playersTurnEndResponse, playerId);
+                broadcastData('back', playersTurnEndResponse, secondPlayerId);
 
                 if (typeOfAttack === 'random') {
                     // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
@@ -159,15 +159,15 @@ function twoPlayersGameAttacks(
                 const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
                 const playersTurnEndResponse = turn(zeroId, playerTurn);
 
-                broadcastData('back', clients, attackResponse, playerId);
-                broadcastData('back', clients, attackResponse, secondPlayerId);
-                broadcastData('back', clients, playersTurnEndResponse, playerId);
-                broadcastData('back', clients, playersTurnEndResponse, secondPlayerId);
+                broadcastData('back', attackResponse, playerId);
+                broadcastData('back', attackResponse, secondPlayerId);
+                broadcastData('back', playersTurnEndResponse, playerId);
+                broadcastData('back', playersTurnEndResponse, secondPlayerId);
             } else {
                 // Ship is killed, lets clear empty spaces and continue to shoot
                 // if (!botData) {
                 const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
-                broadcastData('back', clients, attackResponse, playerId);
+                broadcastData('back', attackResponse, playerId);
                 // }
 
                 const enemyShipParts = db.getShipsLocationBackup(secondPlayerId);
@@ -189,13 +189,15 @@ function twoPlayersGameAttacks(
 
                 if (playerKills === 10) {
                     const endGame = endGameResponse(playerId, zeroId);
-                    broadcastData('everyone-same', clients, endGame);
+                    broadcastData('back', endGame, playerId);
+                    broadcastData('back', endGame, secondPlayerId);
                     db.updateWinners(playerId);
                     const winnersResponse = updateWinnersResponse(zeroId);
-                    broadcastData('everyone-same', clients, winnersResponse);
+                    broadcastData('back', winnersResponse, playerId);
+                    broadcastData('back', winnersResponse, secondPlayerId);
                     db.gameEnded(gameId, playerId, secondPlayerId);
                 } else if (typeOfAttack === 'random') {
-                    // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
+                    // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000); // for faster random shots
                     attack(jsonData, playerId, zeroId, clients, 'random');
                 }
             }
@@ -251,8 +253,8 @@ function attackVsBot(
                     // Ship is wounded, you can continue to shoot
                     const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
                     const playersTurnEndResponse = turn(zeroId, playerTurn);
-                    broadcastData('back', clients, attackResponse, playerId);
-                    broadcastData('back', clients, playersTurnEndResponse, playerId);
+                    broadcastData('back', attackResponse, playerId);
+                    broadcastData('back', playersTurnEndResponse, playerId);
                     if (typeOfAttack === 'random') {
                         // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
                         attack(jsonData, playerId, zeroId, clients, 'random');
@@ -262,15 +264,15 @@ function attackVsBot(
                     playerTurn = db.switchTurn(gameId); // we switch players
                     const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
                     const playersTurnEndResponse = turn(zeroId, playerTurn);
-                    broadcastData('back', clients, attackResponse, playerId);
-                    broadcastData('back', clients, playersTurnEndResponse, playerId);
+                    broadcastData('back', attackResponse, playerId);
+                    broadcastData('back', playersTurnEndResponse, playerId);
                     let [botPositionX, botPositionY] = generateRandomPosition(playerId);
                     const botJsonData = generateBotJson(botPositionX, botPositionY, gameId, secondPlayerId);
                     attack(botJsonData, playerId, zeroId, clients, 'manual', secondPlayerId!); // bot strikes back
                 } else {
                     // Ship is killed, lets clear empty spaces and continue to shoot
                     const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
-                    broadcastData('back', clients, attackResponse, playerId);
+                    broadcastData('back', attackResponse, playerId);
 
                     const enemyShipParts = db.getShipsLocationBackup(secondPlayerId);
 
@@ -291,10 +293,10 @@ function attackVsBot(
 
                     if (playerKills === 10) {
                         const endGame = endGameResponse(playerId, zeroId);
-                        broadcastData('back', clients, endGame, playerId);
+                        broadcastData('back', endGame, playerId);
                         db.updateWinners(playerId);
                         const winnersResponse = updateWinnersResponse(zeroId);
-                        broadcastData('back', clients, winnersResponse, playerId);
+                        broadcastData('back', winnersResponse, playerId);
                         db.gameEnded(gameId, playerId, secondPlayerId);
                     } else if (typeOfAttack === 'random') {
                         setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);

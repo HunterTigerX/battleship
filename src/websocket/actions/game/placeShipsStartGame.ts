@@ -27,16 +27,19 @@ export function placeShipsStartGame(jsonData: any, playerId: number, zeroId: num
         if (playerTwoData && playerOneData) {
             const playerOneResponse = playerOneData.playersResponse;
             const playerTwoResponse = playerTwoData.playersResponse;
-            broadcastData('back', clients, playerOneResponse, playerId);
-            broadcastData('back', clients, playerTwoResponse, playerTwoId);
+            broadcastData('back', playerOneResponse, playerId);
+            broadcastData('back', playerTwoResponse, playerTwoId);
 
             const firstTurnPlayer = returnRandomNumber(2); // return 1 or 2
             const firstTurn = firstTurnPlayer === 1 ? playerTwoId : playerId;
             const playersTurnEndResponse = turn(zeroId, firstTurn);
             db.startFirstTurn(gameId, firstTurn, [playerTwoId, playerId]);
 
-            broadcastData('back', clients, playersTurnEndResponse, playerTwoId);
-            broadcastData('back', clients, playersTurnEndResponse, playerId);
+            db.setPlayerPlaying(playerId);
+            db.setPlayerPlaying(playerTwoId);
+
+            broadcastData('back', playersTurnEndResponse, playerTwoId);
+            broadcastData('back', playersTurnEndResponse, playerId);
         }
     } else {
         alertMessage('Waiting ships from second player');
@@ -59,19 +62,20 @@ export function startGameWithBot(
     savePlayersShipsToDb(botShips, botId, gameStartResponse);
     db.getPlayersInTheWaitingRoom(gameId, playerId);
     db.getPlayersInTheWaitingRoom(gameId, botId);
+    db.setPlayerPlaying(playerId);
     // Received ships from 2 players
 
     const playerOneData = db.getUsersData(playerId);
 
     if (playerOneData) {
         const playerOneResponse = playerOneData.playersResponse;
-        broadcastData('back', clients, playerOneResponse, playerId);
+        broadcastData('back', playerOneResponse, playerId);
         const firstTurnPlayer = returnRandomNumber(2); // return 1 or 2
         const firstTurn = firstTurnPlayer === 1 ? botId : playerId;
         const playersTurnEndResponse = turn(zeroId, firstTurn);
         db.startFirstTurn(gameId, firstTurn, [botId, playerId]);
 
-        broadcastData('back', clients, playersTurnEndResponse, playerId);
+        broadcastData('back', playersTurnEndResponse, playerId);
         if (firstTurn === botId) {
             let [botPositionX, botPositionY] = generateRandomPosition(botId);
             const botJsonData = generateBotJson(botPositionX, botPositionY, gameId, botId);

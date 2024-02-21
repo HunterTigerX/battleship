@@ -30,6 +30,6 @@ export function startSingleGame(playerId: number, botId: number, clients: any, z
 
     const updateGameResponse = returnOpenGamesResponse(zeroId);
 
-    broadcastData('back', clients, playerOneResponse, playerId);
-    broadcastData('everyone-same', clients, updateGameResponse); // Update only for not playing players later
+    broadcastData('back', playerOneResponse, playerId);
+    broadcastData('not-playing', updateGameResponse);
 }

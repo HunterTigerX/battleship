@@ -184,6 +184,13 @@ export class InMemoryDB {
         }
     }
 
+    setPlayerPlaying(userId: number) {
+        const user = this.players.find((player) => player.userId === userId);
+        if (user) {
+            user.startedGame = true;
+        }
+    }
+
     getPlayersInTheWaitingRoom(gameId: number, playerId: number) {
         const currentGame = this.waitingRooms.find((game) => game.room === gameId);
 
@@ -311,12 +318,14 @@ export class InMemoryDB {
             playerOneData.shipsLocationBackup = [];
             playerOneData.shotsLocation = [];
             playerOneData.playersResponse = '';
+            playerOneData.startedGame = false;
             playerTwoData.inTheRoom = undefined;
             playerTwoData.playWithBot = false;
             playerTwoData.shipsLocation = [];
             playerTwoData.shipsLocationBackup = [];
             playerTwoData.shotsLocation = [];
             playerTwoData.playersResponse = '';
+            playerTwoData.startedGame = false;
         }
         // return all player settings to default
         this.waitingRooms = this.waitingRooms.filter((room) => room.room !== gameId);
@@ -333,6 +342,7 @@ export class InMemoryDB {
                 user.online = false;
                 user.inTheRoom = undefined; // also when starting game we need to switch it
                 user.playWithBot = false;
+                user.startedGame = false;
             }
         });
     }
@@ -343,6 +353,10 @@ export class InMemoryDB {
         if (currentPlayerData) {
             currentPlayerData.playWithBot = true;
         }
+    }
+
+    getAllPlayersData() {
+        return this.players;
     }
 
     // testLeaveAndDc() {

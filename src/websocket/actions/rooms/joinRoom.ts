@@ -22,7 +22,7 @@ export function joinRoom(jsonData: any, playerId: number, clients: any[], zeroId
         if (usersInTheGame && usersInTheGame.length === 1) {
             // There were no users in the game
             const openGamesResponse = returnOpenGamesResponse(zeroId); // We update games for other players
-            broadcastData('everyone-same', clients, openGamesResponse); // change to broadcast only to players
+            broadcastData('not-playing', openGamesResponse); // change to broadcast only to players
         } else if (usersInTheGame && usersInTheGame.length === 2) {
             // ther were one user waiting in the game so we can start the game
             // We update games and start the game
@@ -33,10 +33,10 @@ export function joinRoom(jsonData: any, playerId: number, clients: any[], zeroId
             db.removePlayerFromTheGames(playerId); // close only on end?
             db.closeGame(gameToJoin); // close only on end?
             const updateGameResponse = returnOpenGamesResponse(zeroId);
-            broadcastData('back', clients, playerOneResponse, playerWaitingId);
-            broadcastData('back', clients, playerTwoResponse, playerId);
+            broadcastData('back', playerOneResponse, playerWaitingId);
+            broadcastData('back', playerTwoResponse, playerId);
 
-            broadcastData('everyone-same', clients, updateGameResponse);
+            broadcastData('not-playing', updateGameResponse);
         } else {
             alertMessage('This game is already full');
         }

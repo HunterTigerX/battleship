@@ -53,9 +53,9 @@ export function registerLogin(
         }
         respond(responseObject);
         const winnersResponse = updateWinnersResponse(zeroId);
-        broadcastData('everyone-same', clients, winnersResponse);
+        broadcastData('not-playing', winnersResponse);
         const updateRoomResponse = returnOpenGamesResponse(zeroId);
-        broadcastData('everyone-same', clients, updateRoomResponse);
+        broadcastData('not-playing', updateRoomResponse);
 
         db.updateUsersData(returnId, client);
     }

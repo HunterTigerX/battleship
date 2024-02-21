@@ -35,23 +35,23 @@ export function shootAround(targetPositions: any[], clients: any, player: number
             if (bot === 'bot-turn') {
                 // this is bot's turn end player is the enemy
                 const attackResponse = shootAroundTheShip(emptyX, emptyY, player);
-                broadcastData('back', clients, attackResponse, enemy);
+                broadcastData('back', attackResponse, enemy);
                 const playersTurnEndResponse = turn(0, player);
-                broadcastData('back', clients, playersTurnEndResponse, enemy);
+                broadcastData('back', playersTurnEndResponse, enemy);
             } else if (bot === 'human-turn') {
                 // bot game, players turn
                 const attackResponse = shootAroundTheShip(emptyX, emptyY, player);
-                broadcastData('back', clients, attackResponse, player);
+                broadcastData('back', attackResponse, player);
                 const playersTurnEndResponse = turn(0, player);
-                broadcastData('back', clients, playersTurnEndResponse, player);
+                broadcastData('back', playersTurnEndResponse, player);
             } else if (bot === 'non-bot') {
                 // player vs player game
                 const attackResponse = shootAroundTheShip(emptyX, emptyY, player);
-                broadcastData('back', clients, attackResponse, player);
-                broadcastData('back', clients, attackResponse, enemy);
+                broadcastData('back', attackResponse, player);
+                broadcastData('back', attackResponse, enemy);
                 const playersTurnEndResponse = turn(0, player);
-                broadcastData('back', clients, playersTurnEndResponse, player);
-                broadcastData('back', clients, playersTurnEndResponse, enemy);
+                broadcastData('back', playersTurnEndResponse, player);
+                broadcastData('back', playersTurnEndResponse, enemy);
             }
         }
     }

@@ -20,7 +20,7 @@ export function createGame(maxGameNumber: number, clients: any[], zeroId: number
         };
         db.saveOpenGame(newGameData);
         const updateGameResponse = returnOpenGamesResponse(zeroId);
-        broadcastData('everyone-same', clients, updateGameResponse);
+        broadcastData('not-playing', updateGameResponse);
     } else {
         alertMessage(`Max rooms number reached. Current limit of rooms is ${maxGameNumber}`);
     }

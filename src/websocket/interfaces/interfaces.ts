@@ -11,6 +11,7 @@ export interface IUser {
     shipsLocationBackup?: any[];
     shotsLocation?: any[];
     playersResponse?: string;
+    startedGame?: boolean;
 }
 
 export interface IWinners {
