@@ -12,15 +12,12 @@ import { disqualificationOrDisconnect } from './actions/game/disqualification';
 
 // import { alertMessage } from './error';
 
-// Interfaces are above
-import { generateShips } from './functions/botShips';
-
 export const wss = new WebSocket.Server({ port: 3000 });
 let clients = new Array();
 export const db = new InMemoryDB();
-const maxGameNumber: number = 5;
+export const maxGameNumber: number = 5;
 export const maxIdNumbers = 100000;
-let botShips = generateShips();
+
 
 wss.on('connection', (ws, request) => {
     clients.push(ws);
@@ -62,7 +59,7 @@ wss.on('connection', (ws, request) => {
             const userData = db.getUsersData(playerId);
             if (userData) {
                 if (userData.playWithBot === true) {
-                    startGameWithBot(jsonData, playerId, zeroId, clients, botShips, botId);
+                    startGameWithBot(jsonData, playerId, zeroId, clients, botId);
                     // botShips = generateShips();
                 } else {
                     placeShipsStartGame(jsonData, playerId, zeroId, clients);
@@ -79,7 +76,7 @@ wss.on('connection', (ws, request) => {
         }
 
         if (typeOfRequest === 'single_play') {
-            startSingleGame(playerId, botId, clients, zeroId);
+            startSingleGame(playerId, botId, zeroId);
         }
         // End of messaging
     });

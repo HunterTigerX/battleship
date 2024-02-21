@@ -27,13 +27,15 @@ export function generateBotJson(posX: number, posY: number, gameId: number, play
 export function generateRandomPosition(playerId: number) {
     let posX = returnRandomNumber(10) - 1;
     let posY = returnRandomNumber(10) - 1;
-
+    let stop = 1000; // remove later
+    let count = 0; // remove later
     let youCantAttack = checkAttack(posX, posY, playerId);
-    while (youCantAttack) {
+    while (youCantAttack && count < stop) { // remove later
         posX = returnRandomNumber(10) - 1;
         posY = returnRandomNumber(10) - 1;
         youCantAttack = checkAttack(posX, posY, playerId);
     }
+    count = 0; // remove later
     return [posX, posY];
 }
 
@@ -70,6 +72,8 @@ function attackByBot(
         // Ship is killed, lets clear empty spaces and continue to shoot
         const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
         broadcastData('back', attackResponse, humanOpponent);
+        const playersTurnEndResponse = turn(zeroId, botId);
+        broadcastData('back', playersTurnEndResponse, humanOpponent);
         const enemyShipParts = db.getShipsLocationBackup(humanOpponent);
         let fullShip;
         enemyShipParts?.map((arrayInside: any, index: number) => {
@@ -87,7 +91,7 @@ function attackByBot(
         if (botKills === 10) {
             const endGame = endGameResponse(botId, zeroId);
             broadcastData('back', endGame, humanOpponent);
-            db.updateWinners(botId);
+            // db.updateWinners(botId); // If we will want to add bots to the score table, uncomment this
             const winnersResponse = updateWinnersResponse(zeroId);
             broadcastData('back', winnersResponse, humanOpponent);
             db.gameEnded(gameId, botId, humanOpponent);
@@ -107,7 +111,6 @@ function twoPlayersGameAttacks(
     clients: any,
     typeOfAttack: string,
     currentRoomPlayers: any,
-    jsonData: any
 ) {
     // || (botId && currentRoomPlayers))  // if users turn or bot turn
     const currentRoomUsersIds = currentRoomPlayers.players;
@@ -151,7 +154,7 @@ function twoPlayersGameAttacks(
 
                 if (typeOfAttack === 'random') {
                     // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
-                    attack(jsonData, playerId, zeroId, clients, 'random');
+                    // attack(jsonData, playerId, zeroId, clients, 'random');
                 }
             } else if (shotStatus === 'miss') {
                 // We missed any target
@@ -198,7 +201,7 @@ function twoPlayersGameAttacks(
                     db.gameEnded(gameId, playerId, secondPlayerId);
                 } else if (typeOfAttack === 'random') {
                     // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000); // for faster random shots
-                    attack(jsonData, playerId, zeroId, clients, 'random');
+                    // attack(jsonData, playerId, zeroId, clients, 'random');
                 }
             }
         } else {
@@ -215,16 +218,15 @@ function attackVsBot(
     clients: any,
     typeOfAttack: string,
     currentRoomPlayers: any,
-    jsonData: any
 ) {
     const isPlayersTurn = db.checkPlayerTurn(gameId, playerId); // check if it's players turn
     if (isPlayersTurn) {
         // if users turn or bot turn
         const currentRoomUsersIds = currentRoomPlayers.players;
         if (currentRoomUsersIds) {
-            const secondPlayerId = currentRoomUsersIds.filter(
-                // if bot's turn, secont player is the player
-                (playerIdToCheck: any) => playerIdToCheck !== playerId // if player's turn, second player is second player :]
+            // getting bot id
+            const botId = currentRoomUsersIds.filter(
+                (playerIdToCheck: any) => playerIdToCheck !== playerId
             )[0];
 
             let positionX: number;
@@ -232,7 +234,7 @@ function attackVsBot(
 
             let hittingTheSame: boolean = true;
             if (typeOfAttack === 'random') {
-                [positionX, positionY] = generateRandomPosition(playerId);
+                [positionX, positionY] = generateRandomPosition(playerId); // hitting the same below will be false
 
                 attackData.x = positionX;
                 attackData.y = positionY;
@@ -246,9 +248,8 @@ function attackVsBot(
             // We check if the player hits the hitted target
             if (!hittingTheSame) {
                 // We are hitting uniq target
-                const shotStatus: 'miss' | 'killed' | 'shot' = checkHit(positionX, positionY, playerId, secondPlayerId);
+                const shotStatus: 'miss' | 'killed' | 'shot' = checkHit(positionX, positionY, playerId, botId);
                 let playerTurn: any = playerId;
-
                 if (shotStatus === 'shot') {
                     // Ship is wounded, you can continue to shoot
                     const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
@@ -257,7 +258,7 @@ function attackVsBot(
                     broadcastData('back', playersTurnEndResponse, playerId);
                     if (typeOfAttack === 'random') {
                         // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
-                        attack(jsonData, playerId, zeroId, clients, 'random');
+                        // attack(jsonData, playerId, zeroId, clients, 'random');
                     }
                 } else if (shotStatus === 'miss') {
                     // We missed any target
@@ -267,15 +268,18 @@ function attackVsBot(
                     broadcastData('back', attackResponse, playerId);
                     broadcastData('back', playersTurnEndResponse, playerId);
                     let [botPositionX, botPositionY] = generateRandomPosition(playerId);
-                    const botJsonData = generateBotJson(botPositionX, botPositionY, gameId, secondPlayerId);
-                    attack(botJsonData, playerId, zeroId, clients, 'manual', secondPlayerId!); // bot strikes back
+                    const botJsonData = generateBotJson(botPositionX, botPositionY, gameId, botId);
+                    attack(botJsonData, playerId, zeroId, clients, 'manual', botId!); // bot strikes back
                 } else {
                     // Ship is killed, lets clear empty spaces and continue to shoot
                     const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
                     broadcastData('back', attackResponse, playerId);
-
-                    const enemyShipParts = db.getShipsLocationBackup(secondPlayerId);
-
+                    
+                    const playersTurnEndResponse = turn(zeroId, playerTurn);
+                    broadcastData('back', playersTurnEndResponse, playerId);
+                    
+                    const enemyShipParts = db.getShipsLocationBackup(botId);
+                    
                     let fullShip;
                     enemyShipParts?.map((arrayInside: any, index: number) => {
                         const checkPartsOfTheShip = arrayInside.find(
@@ -287,19 +291,19 @@ function attackVsBot(
                         }
                     });
                     if (fullShip) {
-                        shootAround(getSurroundingPositions(fullShip), clients, playerId, secondPlayerId, 'human-turn');
+                        shootAround(getSurroundingPositions(fullShip), clients, playerId, botId, 'human-turn');
                     }
                     const playerKills = db.countKils(playerId, gameId); // Check if we won
-
                     if (playerKills === 10) {
                         const endGame = endGameResponse(playerId, zeroId);
                         broadcastData('back', endGame, playerId);
                         db.updateWinners(playerId);
                         const winnersResponse = updateWinnersResponse(zeroId);
                         broadcastData('back', winnersResponse, playerId);
-                        db.gameEnded(gameId, playerId, secondPlayerId);
+                        broadcastData('not-playing', winnersResponse, playerId);
+                        db.gameEnded(gameId, playerId, botId);
                     } else if (typeOfAttack === 'random') {
-                        setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
+                        // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
                     }
                 }
             } else {
@@ -321,7 +325,7 @@ export function attack(
     const gameId = attackData.gameId;
 
     if (botId) {
-        attackByBot(attackData, playerId, gameId, zeroId, clients, botId);
+        attackByBot(attackData, playerId, gameId, zeroId, clients, botId); // bot's move
     } else {
         const isPlayersTurn = db.checkPlayerTurn(gameId, playerId); // check if it's players turn
         if (isPlayersTurn) {
@@ -330,7 +334,7 @@ export function attack(
             if (userData && userData.inTheRoom) {
                 const currentRoomPlayers = db.getWaitingRoomPlayersData(gameId);
                 const isGameVsBot = userData.playWithBot;
-                if (isPlayersTurn && currentRoomPlayers && !isGameVsBot) {
+                if (isPlayersTurn && currentRoomPlayers && !isGameVsBot) { // this is pvp
                     twoPlayersGameAttacks(
                         attackData,
                         playerId,
@@ -339,9 +343,8 @@ export function attack(
                         clients,
                         typeOfAttack,
                         currentRoomPlayers,
-                        jsonData
                     );
-                } else if (isPlayersTurn && currentRoomPlayers && isGameVsBot) {
+                } else if (isPlayersTurn && currentRoomPlayers && isGameVsBot) { // this is pve
                     attackVsBot(
                         attackData,
                         playerId,
@@ -349,8 +352,7 @@ export function attack(
                         zeroId,
                         clients,
                         typeOfAttack,
-                        currentRoomPlayers,
-                        jsonData
+                        currentRoomPlayers
                     );
                 }
             }

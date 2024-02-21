@@ -15,9 +15,7 @@ export function broadcastData(type: 'back' | 'not-playing', data: any, playerId?
                 if (!player.startedGame) {
                     if (player.userType !== 'bot') {
                         const playerClient = player.userDataWs;
-                        console.log('player', player.userId, playerClient)
                         if (playerClient.readyState === WebSocket.OPEN) {
-                            console.log('data', data)
                             playerClient.send(data);
                         }
                     }

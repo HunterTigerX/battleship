@@ -1,4 +1,5 @@
 import { db } from '../../websocketserver';
+import { generateCoordinates } from '../../functions/botShips';
 
 export function savePlayersShipsToDb(shipsArray: any[], playerIndex: number, gameStartResponse: any) {
     let playerShipsArray: any[] = [];
@@ -43,6 +44,6 @@ export function savePlayersShipsToDb(shipsArray: any[], playerIndex: number, gam
     }
 
     const shipsCopy = JSON.stringify([...playerShipsArray]);
-    db.saveShipsLocation([...playerShipsArray], playerIndex, gameStartResponse, shipsCopy);
+    db.saveShipsLocation([...playerShipsArray], playerIndex, gameStartResponse, shipsCopy, generateCoordinates());
     playerShipsArray = [];
 }

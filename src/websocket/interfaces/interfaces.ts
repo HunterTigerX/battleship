@@ -9,6 +9,7 @@ export interface IUser {
     playWithBot?: boolean;
     shipsLocation?: any[];
     shipsLocationBackup?: any[];
+    availableLocations?: any[];
     shotsLocation?: any[];
     playersResponse?: string;
     startedGame?: boolean;

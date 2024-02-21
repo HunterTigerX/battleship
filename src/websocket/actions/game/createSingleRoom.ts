@@ -3,14 +3,22 @@ import { db } from '../../websocketserver';
 import { gameCreate } from '../rooms/joinStartGameResponse';
 import { broadcastData } from '../../broadcasts/broadcast';
 import { returnOpenGamesResponse } from '../rooms/updateGameResponse';
-export function startSingleGame(playerId: number, botId: number, clients: any, zeroId: number) {
+import { maxGameNumber as minRoomNumber } from '../../websocketserver';
+
+export function startSingleGame(playerId: number, botId: number, zeroId: number) {
+    
     const maxGameNumber = 999999;
     // We create game -> Join game -> Receive ships -> start game
-    let gameId = returnRandomNumber(maxGameNumber); // Generating new game number
+    let gameId = returnRandomNumber(minRoomNumber + 1, maxGameNumber); // Generating new game number
 
     while (db.checkOpenGames(gameId)) {
         // Checking if there is a game with this number
-        gameId = returnRandomNumber(maxGameNumber);
+        gameId = returnRandomNumber(maxGameNumber); // If true, generate new game id untill game id will be uniq
+    }
+    
+    const isPlayerInTheGame = db.isPlayerInTheOpenGame(playerId);
+    if (isPlayerInTheGame) {
+        db.removePlayerFromTheGames(playerId); // remove player from last game if he was in another game
     }
 
     db.setGameWithBot(playerId); // set players settings to the bot mode

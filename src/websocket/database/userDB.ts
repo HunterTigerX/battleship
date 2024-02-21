@@ -257,16 +257,27 @@ export class InMemoryDB {
                 currentPlayerData.shotsLocation = [];
             }
             currentPlayerData.shotsLocation.push(location);
+            currentPlayerData.availableLocations = currentPlayerData.availableLocations?.filter(availablelLocation => availablelLocation.x !== location.x && availablelLocation.y !== location.y)
         }
     }
 
-    saveShipsLocation(ships: any[], playerId: number, gameStartResponse?: any, shipsCopy?: string) {
+    getAvailableLocation(playerId: number) {
+        const currentPlayerData = this.players.find((player) => player.userId === playerId);
+        if (currentPlayerData) {
+            return currentPlayerData.availableLocations
+        }
+    }
+
+    saveShipsLocation(ships: any[], playerId: number, gameStartResponse?: any, shipsCopy?: string, availableLocations?: any[]) {
         const player = this.players.find((player) => player.userId === playerId);
         if (player) {
             player.shipsLocation = ships;
             if (shipsCopy && gameStartResponse) {
                 player.playersResponse = gameStartResponse;
                 player.shipsLocationBackup = JSON.parse(shipsCopy);
+            }
+            if (availableLocations) {
+                player.availableLocations = availableLocations;
             }
         }
     }
@@ -319,6 +330,7 @@ export class InMemoryDB {
             playerOneData.shotsLocation = [];
             playerOneData.playersResponse = '';
             playerOneData.startedGame = false;
+            playerOneData.availableLocations = [];
             playerTwoData.inTheRoom = undefined;
             playerTwoData.playWithBot = false;
             playerTwoData.shipsLocation = [];
@@ -326,6 +338,7 @@ export class InMemoryDB {
             playerTwoData.shotsLocation = [];
             playerTwoData.playersResponse = '';
             playerTwoData.startedGame = false;
+            playerTwoData.availableLocations = [];
         }
         // return all player settings to default
         this.waitingRooms = this.waitingRooms.filter((room) => room.room !== gameId);

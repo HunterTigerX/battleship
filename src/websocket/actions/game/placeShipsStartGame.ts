@@ -7,6 +7,7 @@ import { turn } from './turnResponse';
 import { alertMessage } from '../../errors/error';
 import { broadcastData } from '../../broadcasts/broadcast';
 import { generateBotJson, generateRandomPosition, attack } from './battle';
+import { generateShips } from '../../functions/botShips';
 
 export function placeShipsStartGame(jsonData: any, playerId: number, zeroId: number, clients: any) {
     const jsonDataShips: IAddShipsJson = JSON.parse(jsonData.data);
@@ -51,7 +52,6 @@ export function startGameWithBot(
     playerId: number,
     zeroId: number,
     clients: any,
-    botShips: any[],
     botId: number
 ) {
     const jsonDataShips: IAddShipsJson = JSON.parse(jsonData.data);
@@ -59,6 +59,7 @@ export function startGameWithBot(
     const shipsArray: IShips[] = jsonDataShips.ships;
     const gameStartResponse: string = createGameResponse(playerId, shipsArray, zeroId, gameId);
     savePlayersShipsToDb(shipsArray, playerId, gameStartResponse);
+    let botShips = generateShips();
     savePlayersShipsToDb(botShips, botId, gameStartResponse);
     db.getPlayersInTheWaitingRoom(gameId, playerId);
     db.getPlayersInTheWaitingRoom(gameId, botId);

@@ -97,9 +97,9 @@ function removeAvailableFields(
         } else {
             // the direction of the ship is in horizontal (x) axis
             if (i === 1) {
-                newField = filterField(positionX + i - 1, positionY - 1, newField);
-                newField = filterField(positionX + i - 1, positionY, newField);
-                newField = filterField(positionX + i - 1, positionY + 1, newField);
+                newField = filterField(positionX - 1, positionY - 1, newField);
+                newField = filterField(positionX - 1, positionY, newField);
+                newField = filterField(positionX - 1, positionY + 1, newField);
             } 
             if (i === shipSize) {
                 newField = filterField(positionX + i, positionY - 1, newField);
@@ -155,11 +155,10 @@ function checkIfShipPositionAvailable(
     return canWePlace;
 }
 
-let availableFieldGenerator = JSON.stringify(generateCoordinates());
 export function generateShips() {
     const shipsCounts = [1, 2, 2, 3, 3, 3, 4, 4, 4, 4]; // Desired number of ships
     const shipLengths = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]; // Ships length
-    let availableField = JSON.parse(availableFieldGenerator);
+    let availableField = generateCoordinates();
     const shipsArrayData = [];
     for (let i = 0; i < shipsCounts.length; i += 1) {
         const shipLength = shipLengths[i];
@@ -202,7 +201,6 @@ export function generateShips() {
         });
 
     }
-
     return shipsArrayData;
     // return copyFillPlayersShipsToArray(shipsArrayData); // for testing purposes
 }

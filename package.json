@@ -4,10 +4,10 @@
         "server": "",
         "lint": "eslint . --ext .ts",
         "test": "jest  --silent=false --forceExit",
-        "startOld": "node ./src/http_server/index.ts",
-        "start:nodemon": "nodemon ./src/http_server/index.ts",
         "start": "tsx ./src/http_server/index.ts",
-        "start:dev": "tsx watch ./src/http_server/index.ts"
+        "start:dev": "tsx watch ./src/http_server/index.ts",
+        "start:nodemon": "nodemon ./src/http_server/index.ts",
+        "start:node": "node ./src/http_server/index.ts"
     },
     "devDependencies": {
         "@types/node": "^20.11.17",
