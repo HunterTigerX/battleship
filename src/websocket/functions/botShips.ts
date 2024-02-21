@@ -1,55 +1,56 @@
 import { returnRandomNumber } from '../functions/randomNum';
 
-function copyFillPlayersShipsToArray(shipsArray: any[]) { // for testing purposes to check ships generation position
-    let playerShipsArray: any[] = [];
+// function copyFillPlayersShipsToArray(shipsArray: any[]) {
+//     // for testing purposes to check ships generation position
+//     let playerShipsArray: any[] = [];
 
-    for (let i = 0; i < shipsArray.length; i += 1) {
-        const ship = [];
+//     for (let i = 0; i < shipsArray.length; i += 1) {
+//         const ship = [];
 
-        const shipPositionX = shipsArray[i].position.x;
-        const shipPositionY = shipsArray[i].position.y;
-        const shipDirection = shipsArray[i].direction;
+//         const shipPositionX = shipsArray[i].position.x;
+//         const shipPositionY = shipsArray[i].position.y;
+//         const shipDirection = shipsArray[i].direction;
 
-        // true = vertical (y) axis
-        // false = horizontal (x) axis
-        const shipLength =
-            shipsArray[i].type === 'small'
-                ? 1
-                : shipsArray[i].type === 'medium'
-                  ? 2
-                  : shipsArray[i].type === 'large'
-                    ? 3
-                    : 4;
-        // "small"|"medium"|"large"|"huge"
+//         // true = vertical (y) axis
+//         // false = horizontal (x) axis
+//         const shipLength =
+//             shipsArray[i].type === 'small'
+//                 ? 1
+//                 : shipsArray[i].type === 'medium'
+//                   ? 2
+//                   : shipsArray[i].type === 'large'
+//                     ? 3
+//                     : 4;
+//         // "small"|"medium"|"large"|"huge"
 
-        if (shipDirection === true) {
-            // we go Y axis
-            for (let f = 0; f < shipLength; f += 1) {
-                ship.push({
-                    x: shipPositionX,
-                    y: shipPositionY + f,
-                });
-            }
-        } else {
-            // we go X axis
-            for (let f = 0; f < shipLength; f += 1) {
-                ship.push({
-                    x: shipPositionX + f,
-                    y: shipPositionY,
-                });
-            }
-        }
-        playerShipsArray.push(ship);
-    }
+//         if (shipDirection === true) {
+//             // we go Y axis
+//             for (let f = 0; f < shipLength; f += 1) {
+//                 ship.push({
+//                     x: shipPositionX,
+//                     y: shipPositionY + f,
+//                 });
+//             }
+//         } else {
+//             // we go X axis
+//             for (let f = 0; f < shipLength; f += 1) {
+//                 ship.push({
+//                     x: shipPositionX + f,
+//                     y: shipPositionY,
+//                 });
+//             }
+//         }
+//         playerShipsArray.push(ship);
+//     }
 
-    const shipsCopy = JSON.stringify([...playerShipsArray]);
-    return shipsCopy;
-}
+//     const shipsCopy = JSON.stringify([...playerShipsArray]);
+//     return shipsCopy;
+// }
 
 export function generateCoordinates(): any[] {
     const result = [];
-    for (let x = 0; x < 10; x++) {
-        for (let y = 0; y < 10; y++) {
+    for (let x = 0; x < 10; x += 1) {
+        for (let y = 0; y < 10; y += 1) {
             result.push({ x, y });
         }
     }
@@ -65,7 +66,6 @@ function filterField(valueX: number, valueY: number, field: any[]): any[] {
             break;
         }
     }
-
     return field;
 }
 
@@ -78,35 +78,37 @@ function removeAvailableFields(
 ) {
     let newField = availableField;
 
-    for (let i = 0; i < shipSize; i += 1) {
+    for (let i = 1; i <= shipSize; i += 1) {
         if (shipDirection) {
             // the direction of the ship is in vertical (y) axis
-            if (i === 0) {
-                newField = filterField(positionX - 1, positionY + i - 1, newField);
-                newField = filterField(positionX, positionY + i - 1, newField);
-                newField = filterField(positionX + 1, positionY + i - 1, newField);
-            } else if (i === shipSize - 1) {
-                newField = filterField(positionX - 1, positionY + i + 1, newField);
-                newField = filterField(positionX, positionY + i + 1, newField);
-                newField = filterField(positionX + 1, positionY + i + 1, newField);
+            if (i === 1) {
+                newField = filterField(positionX - 1, positionY - i, newField); // top left spot above the ship
+                newField = filterField(positionX, positionY - i, newField); // top center spot above the ship
+                newField = filterField(positionX + 1, positionY - i, newField); // top right spot of the ship
+            } 
+            if (i === shipSize) {
+                newField = filterField(positionX - 1, positionY + i, newField); // bottom left spot under the ship
+                newField = filterField(positionX, positionY + i, newField); // bottom center spot under the ship
+                newField = filterField(positionX + 1, positionY + i, newField); // bottom right spot under the ship
             }
-            newField = filterField(positionX - 1, positionY + i, newField);
-            newField = filterField(positionX, positionY + i, newField);
-            newField = filterField(positionX + 1, positionY + i, newField);
+            newField = filterField(positionX - 1, positionY + i - 1, newField); // left side of the center of the spot
+            newField = filterField(positionX, positionY + i - 1, newField); // spot at the center
+            newField = filterField(positionX + 1, positionY + i - 1, newField); // right side of the center of the spot
         } else {
             // the direction of the ship is in horizontal (x) axis
-            if (i === 0) {
+            if (i === 1) {
                 newField = filterField(positionX + i - 1, positionY - 1, newField);
                 newField = filterField(positionX + i - 1, positionY, newField);
                 newField = filterField(positionX + i - 1, positionY + 1, newField);
-            } else if (i === shipSize - 1) {
-                newField = filterField(positionX + i + 1, positionY - 1, newField);
-                newField = filterField(positionX + i + 1, positionY, newField);
-                newField = filterField(positionX + i + 1, positionY + 1, newField);
+            } 
+            if (i === shipSize) {
+                newField = filterField(positionX + i, positionY - 1, newField);
+                newField = filterField(positionX + i, positionY, newField);
+                newField = filterField(positionX + i, positionY + 1, newField);
             }
-            newField = filterField(positionX + i, positionY - 1, newField);
-            newField = filterField(positionX + i, positionY, newField);
-            newField = filterField(positionX + i, positionY + 1, newField);
+            newField = filterField(positionX + i - 1, positionY - 1, newField);
+            newField = filterField(positionX + i - 1, positionY, newField);
+            newField = filterField(positionX + i - 1, positionY + 1, newField);
         }
     }
     return newField;
@@ -198,7 +200,9 @@ export function generateShips() {
             type: type,
             length: shipLength,
         });
+
     }
+
     return shipsArrayData;
     // return copyFillPlayersShipsToArray(shipsArrayData); // for testing purposes
 }

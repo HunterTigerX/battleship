@@ -54,7 +54,6 @@ export function startGameWithBot(
     const jsonDataShips: IAddShipsJson = JSON.parse(jsonData.data);
     const gameId = jsonDataShips.gameId;
     const shipsArray: IShips[] = jsonDataShips.ships;
-
     const gameStartResponse: string = createGameResponse(playerId, shipsArray, zeroId, gameId);
     savePlayersShipsToDb(shipsArray, playerId, gameStartResponse);
     savePlayersShipsToDb(botShips, botId, gameStartResponse);

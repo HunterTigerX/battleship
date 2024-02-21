@@ -8,6 +8,7 @@ import { placeShipsStartGame, startGameWithBot } from './actions/game/placeShips
 import { returnRandomNumber } from './functions/randomNum';
 import { attack } from './actions/game/battle';
 import { startSingleGame } from './actions/game/createSingleRoom';
+import { disqualificationOrDisconnect } from './actions/game/disqualification';
 
 // import { alertMessage } from './error';
 
@@ -86,8 +87,10 @@ wss.on('connection', (ws, request) => {
     ws.on('close', () => {
         // Handle WebSocket connection close
         const index = clients.indexOf(ws);
-        db.userLeft(playerId, botId);
+        disqualificationOrDisconnect(playerId, clients);
+        db.userLeft(playerId, botId)
         clients.splice(index, 1);
         console.log('WebSocket connection closed');
+        // db.testLeaveAndDc(); // for testing data removal
     });
 });

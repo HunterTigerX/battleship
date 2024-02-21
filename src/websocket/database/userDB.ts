@@ -44,7 +44,7 @@ export class InMemoryDB {
     }
 
     getUsersData(userId: number) {
-        const playerData = this.players.find((p) => p.userId === userId);
+        const playerData = this.players.find((player) => player.userId === userId);
         return playerData;
     }
 
@@ -57,18 +57,6 @@ export class InMemoryDB {
 
     removeUsersData(playerId: number): void {
         this.players.filter((users) => users.userId !== playerId);
-    }
-
-    userLeft(userId: number, botId: number): void {
-        this.removeUsersData(botId); // We remove bot when the user log off
-        this.players.map((user) => {
-            // we set users status offline
-            if (user.userId === userId) {
-                user.online = false;
-                user.inTheRoom = undefined; // also when starting game we need to switch it
-                user.playWithBot = false;
-            }
-        });
     }
 
     findUserWsData(playerId: number) {
@@ -114,18 +102,18 @@ export class InMemoryDB {
 
     updateWinners(playerId: number): void {
         const userName = this.getUsername(playerId);
-        const checkWinner = this.winners.find((user) => {
-            if (user.name === userName) {
-                user.wins += 1;
+        if (userName) { // We add only players to the winning board
+            const checkWinner = this.winners.find((user) => user.name === userName);
+            if (checkWinner) {
+                checkWinner.wins += 1;
+            } else if (!checkWinner) {
+                // We add new winner
+                const newWinner: IWinners = {
+                    name: userName,
+                    wins: 1,
+                };
+                this.winners.push(newWinner);
             }
-        });
-        if (!checkWinner && userName) {
-            // We add new winner
-            const newWinner: IWinners = {
-                name: userName,
-                wins: 1,
-            };
-            this.winners.push(newWinner);
         }
     }
 
@@ -310,11 +298,45 @@ export class InMemoryDB {
 
     disqualification(playerId: number) {
         // check if someone DC'd if he was in the game
+        
     }
 
-    gameEnded(gameId: number): void {
+    gameEnded(gameId: number, playerId: number, enemyId: number): void {
+        const playerOneData = this.players.find((player) => player.userId === playerId);
+        const playerTwoData = this.players.find((player) => player.userId === enemyId);
+        if (playerOneData && playerTwoData) {
+            playerOneData.inTheRoom = undefined;
+            playerOneData.playWithBot = false;
+            playerOneData.shipsLocation = [];
+            playerOneData.shipsLocationBackup = [];
+            playerOneData.shotsLocation = [];
+            playerOneData.playersResponse = '';
+            playerTwoData.inTheRoom = undefined;
+            playerTwoData.playWithBot = false;
+            playerTwoData.shipsLocation = [];
+            playerTwoData.shipsLocationBackup = [];
+            playerTwoData.shotsLocation = [];
+            playerTwoData.playersResponse = '';
+        }
         // return all player settings to default
+        this.waitingRooms = this.waitingRooms.filter((room) => room.room !== gameId);
+        this.playersTurns = this.playersTurns.filter((room) => room.gameId !== gameId);
+        this.kills = this.kills.filter((game) => game.gameId !== gameId);
+
     }
+
+    userLeft(userId: number, botId: number): void {
+        this.removeUsersData(botId); // We remove bot when the user log off
+        this.players.map((user) => {
+            // we set users status offline
+            if (user.userId === userId) {
+                user.online = false;
+                user.inTheRoom = undefined; // also when starting game we need to switch it
+                user.playWithBot = false;
+            }
+        });
+    }
+
 
     setGameWithBot(playerId: number) {
         const currentPlayerData = this.players.find((player) => player.userId === playerId);
@@ -322,4 +344,13 @@ export class InMemoryDB {
             currentPlayerData.playWithBot = true;
         }
     }
+
+    // testLeaveAndDc() {
+    //     console.log('this.gamesList', this.gamesList);
+    //     console.log('this.waitingRooms', this.waitingRooms);
+    //     console.log('this.gamesWithShips', this.gamesWithShips);
+    //     console.log('this.playersTurns', this.playersTurns);
+    //     console.log('this.kills', this.kills);
+    // }
 }
+

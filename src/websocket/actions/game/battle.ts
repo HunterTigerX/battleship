@@ -81,7 +81,7 @@ function attackByBot(
             }
         });
         if (fullShip) {
-            shootAround(getSurroundingPositions(fullShip), clients, botId, humanOpponent, "bot-turn");
+            shootAround(getSurroundingPositions(fullShip), clients, botId, humanOpponent, 'bot-turn');
         }
         const botKills = db.countKils(botId, gameId); // Check if we won
         if (botKills === 10) {
@@ -90,7 +90,7 @@ function attackByBot(
             db.updateWinners(botId);
             const winnersResponse = updateWinnersResponse(zeroId);
             broadcastData('back', clients, winnersResponse, humanOpponent);
-            db.gameEnded(gameId);
+            db.gameEnded(gameId, botId, humanOpponent);
         } else {
             let [botPositionX, botPositionY] = generateRandomPosition(botId);
             const botJsonData = generateBotJson(botPositionX, botPositionY, gameId, botId);
@@ -183,7 +183,7 @@ function twoPlayersGameAttacks(
                     }
                 });
                 if (fullShip) {
-                    shootAround(getSurroundingPositions(fullShip), clients, playerId, secondPlayerId, "non-bot");
+                    shootAround(getSurroundingPositions(fullShip), clients, playerId, secondPlayerId, 'non-bot');
                 }
                 const playerKills = db.countKils(playerId, gameId); // Check if we won
 
@@ -193,7 +193,7 @@ function twoPlayersGameAttacks(
                     db.updateWinners(playerId);
                     const winnersResponse = updateWinnersResponse(zeroId);
                     broadcastData('everyone-same', clients, winnersResponse);
-                    db.gameEnded(gameId);
+                    db.gameEnded(gameId, playerId, secondPlayerId);
                 } else if (typeOfAttack === 'random') {
                     // setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
                     attack(jsonData, playerId, zeroId, clients, 'random');
@@ -285,7 +285,7 @@ function attackVsBot(
                         }
                     });
                     if (fullShip) {
-                        shootAround(getSurroundingPositions(fullShip), clients, playerId, secondPlayerId, "human-turn");
+                        shootAround(getSurroundingPositions(fullShip), clients, playerId, secondPlayerId, 'human-turn');
                     }
                     const playerKills = db.countKils(playerId, gameId); // Check if we won
 
@@ -295,7 +295,7 @@ function attackVsBot(
                         db.updateWinners(playerId);
                         const winnersResponse = updateWinnersResponse(zeroId);
                         broadcastData('back', clients, winnersResponse, playerId);
-                        db.gameEnded(gameId);
+                        db.gameEnded(gameId, playerId, secondPlayerId);
                     } else if (typeOfAttack === 'random') {
                         setTimeout(() => attack(jsonData, playerId, zeroId, clients, 'random'), 2000);
                     }
@@ -325,7 +325,7 @@ export function attack(
         if (isPlayersTurn) {
             // This is players turn
             const userData = db.getUsersData(playerId);
-            if (userData) {
+            if (userData && userData.inTheRoom) {
                 const currentRoomPlayers = db.getWaitingRoomPlayersData(gameId);
                 const isGameVsBot = userData.playWithBot;
                 if (isPlayersTurn && currentRoomPlayers && !isGameVsBot) {
