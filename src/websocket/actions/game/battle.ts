@@ -1,5 +1,5 @@
 import { db } from '../../websocketserver';
-import { attackShipsResponse } from './attackResponse';
+import { attackShipsResponse, destroyShip } from './attackResponse';
 import { checkHit, checkAttack, getSurroundingPositions, shootAround } from './checkShots';
 import { broadcastData } from '../../broadcasts/broadcast';
 import { turn } from './turnResponse';
@@ -22,6 +22,32 @@ export function generateBotJson(posX: number, posY: number, gameId: number, play
         id: 0,
     };
     return result;
+}
+
+function makeShipDestroyed(
+    destroyedShip: any[],
+    playerId: number,
+    enemyId: number,
+    botGame: boolean = false,
+    botMoove?: boolean
+) {
+    for (let i = 0; i < destroyedShip.length; i += 1) {
+        const attackResponse = destroyShip(destroyedShip[i].x, destroyedShip[i].y, playerId);
+        if (!botGame) {
+            broadcastData('back', attackResponse, playerId);
+            broadcastData('back', attackResponse, enemyId);
+        } else {
+            if (botMoove === true) {
+                broadcastData('back', attackResponse, enemyId);
+                const playersTurnEndResponse = turn(0, playerId);
+                broadcastData('back', playersTurnEndResponse, enemyId);
+            } else {
+                broadcastData('back', attackResponse, playerId);
+                const playersTurnEndResponse = turn(0, playerId);
+                broadcastData('back', playersTurnEndResponse, playerId);
+            }
+        }
+    }
 }
 
 export function generateRandomPosition(playerId: number) {
@@ -81,10 +107,6 @@ function attackByBot(
         broadcastData('back', playersTurnEndResponse, humanOpponent);
     } else {
         // Ship is killed, lets clear empty spaces and continue to shoot
-        const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
-        broadcastData('back', attackResponse, humanOpponent);
-        const playersTurnEndResponse = turn(zeroId, botId);
-        broadcastData('back', playersTurnEndResponse, humanOpponent);
         const enemyShipParts = db.getShipsLocationBackup(humanOpponent);
         let fullShip;
         enemyShipParts?.map((arrayInside: any, index: number) => {
@@ -96,6 +118,7 @@ function attackByBot(
             }
         });
         if (fullShip) {
+            makeShipDestroyed(fullShip, humanOpponent, botId, true, true);
             shootAround(getSurroundingPositions(fullShip), botId, humanOpponent, 'bot-turn');
         }
         const botKills = db.countKils(botId, gameId); // Check if we won
@@ -139,8 +162,10 @@ function twoPlayersGameAttacks(
             const availableShot = db.getAvailableLocation(secondPlayerId);
             if (availableShot) {
                 const randomArrayIndex = returnRandomNumber(availableShot.length) - 1;
-                attackData.x = availableShot[randomArrayIndex].x;
-                attackData.y = availableShot[randomArrayIndex].y;
+                positionX = availableShot[randomArrayIndex].x;
+                positionY = availableShot[randomArrayIndex].y;
+                attackData.x = positionX;
+                attackData.y = positionY;
             } else {
                 [positionX, positionY] = generateRandomPosition(playerId); // hitting the same below will be false
                 attackData.x = positionX;
@@ -186,11 +211,6 @@ function twoPlayersGameAttacks(
             } else {
                 // Ship is killed, lets clear empty spaces and continue to shoot
 
-                const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
-
-                broadcastData('back', attackResponse, playerId);
-                broadcastData('back', attackResponse, secondPlayerId);
-
                 const enemyShipParts = db.getShipsLocationBackup(secondPlayerId);
 
                 let fullShip;
@@ -204,6 +224,7 @@ function twoPlayersGameAttacks(
                     }
                 });
                 if (fullShip) {
+                    makeShipDestroyed(fullShip, playerId, secondPlayerId, false, false);
                     shootAround(getSurroundingPositions(fullShip), playerId, secondPlayerId, 'non-bot');
                 }
                 const playerKills = db.countKils(playerId, gameId); // Check if we won
@@ -253,8 +274,10 @@ function attackVsBot(
                 const availableShot = db.getAvailableLocation(botId);
                 if (availableShot) {
                     const randomArrayIndex = returnRandomNumber(availableShot.length) - 1;
-                    attackData.x = availableShot[randomArrayIndex].x;
-                    attackData.y = availableShot[randomArrayIndex].y;
+                    positionX = availableShot[randomArrayIndex].x;
+                    positionY = availableShot[randomArrayIndex].y;
+                    attackData.x = positionX;
+                    attackData.y = positionY;
                 } else {
                     [positionX, positionY] = generateRandomPosition(playerId); // hitting the same below will be false
                     attackData.x = positionX;
@@ -295,11 +318,6 @@ function attackVsBot(
                     // setTimeout(() => attack(botJsonData, playerId, zeroId, clients, 'manual', botId), 2000);
                 } else {
                     // Ship is killed, lets clear empty spaces and continue to shoot
-                    const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
-                    broadcastData('back', attackResponse, playerId);
-
-                    const playersTurnEndResponse = turn(zeroId, playerTurn);
-                    broadcastData('back', playersTurnEndResponse, playerId);
 
                     const enemyShipParts = db.getShipsLocationBackup(botId);
 
@@ -314,6 +332,7 @@ function attackVsBot(
                         }
                     });
                     if (fullShip) {
+                        makeShipDestroyed(fullShip, playerId, botId, true, false);
                         shootAround(getSurroundingPositions(fullShip), playerId, botId, 'human-turn');
                     }
                     const playerKills = db.countKils(playerId, gameId); // Check if we won

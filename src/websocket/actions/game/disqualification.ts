@@ -19,10 +19,10 @@ export function disqualificationOrDisconnect(userId: number, clients: any) {
                     const secondPlayerId = playersInTheRoom.filter((player) => player !== userId)[0];
 
                     const endGame = endGameResponse(secondPlayerId, zeroId);
-                    broadcastData('back', clients, endGame, secondPlayerId);
+                    broadcastData('back', endGame, secondPlayerId);
                     db.updateWinners(secondPlayerId);
                     const winnersResponse = updateWinnersResponse(zeroId);
-                    broadcastData('back', clients, winnersResponse, secondPlayerId);
+                    broadcastData('back', winnersResponse, secondPlayerId);
                     db.gameEnded(usersRoom, secondPlayerId, userId);
                     
                 } else {

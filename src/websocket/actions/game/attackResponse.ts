@@ -30,7 +30,28 @@ export function shootAroundTheShip(posX: number, posY: number, player: number) {
     let dataObject: IAttackData = {
         position: position,
         currentPlayer: player,
-        status: 'miss',
+        status: "miss",
+    };
+
+    let result = {
+        type: 'attack',
+        data: JSON.stringify(dataObject),
+        id: 0,
+    };
+
+    return JSON.stringify(result);
+}
+
+export function destroyShip(posX: number, posY: number, player: number) {
+    const position: IPosition = {
+        x: posX,
+        y: posY,
+    };
+
+    let dataObject: IAttackData = {
+        position: position,
+        currentPlayer: player,
+        status: "killed",
     };
 
     let result = {
