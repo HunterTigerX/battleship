@@ -102,7 +102,8 @@ export class InMemoryDB {
 
     updateWinners(playerId: number): void {
         const userName = this.getUsername(playerId);
-        if (userName) { // We add only players to the winning board
+        if (userName) {
+            // We add only players to the winning board
             const checkWinner = this.winners.find((user) => user.name === userName);
             if (checkWinner) {
                 checkWinner.wins += 1;
@@ -249,26 +250,35 @@ export class InMemoryDB {
         }
     }
 
-    saveShotsLocation(location: IPosition, playerId: number) {
+    saveShotsLocation(location: IPosition, playerId: number, enemyId: number) {
         const currentPlayerData = this.players.find((player) => player.userId === playerId);
+        const enemyPlayerData = this.players.find((player) => player.userId === enemyId);
 
-        if (currentPlayerData) {
+        if (currentPlayerData && enemyPlayerData) {
             if (!currentPlayerData.shotsLocation) {
                 currentPlayerData.shotsLocation = [];
             }
             currentPlayerData.shotsLocation.push(location);
-            currentPlayerData.availableLocations = currentPlayerData.availableLocations?.filter(availablelLocation => availablelLocation.x !== location.x && availablelLocation.y !== location.y)
+            enemyPlayerData.availableLocations = enemyPlayerData.availableLocations?.filter(
+                (availablelLocation) => !(availablelLocation.x === location.x && availablelLocation.y === location.y)
+            );
         }
     }
 
     getAvailableLocation(playerId: number) {
         const currentPlayerData = this.players.find((player) => player.userId === playerId);
         if (currentPlayerData) {
-            return currentPlayerData.availableLocations
+            return currentPlayerData.availableLocations;
         }
     }
 
-    saveShipsLocation(ships: any[], playerId: number, gameStartResponse?: any, shipsCopy?: string, availableLocations?: any[]) {
+    saveShipsLocation(
+        ships: any[],
+        playerId: number,
+        gameStartResponse?: any,
+        shipsCopy?: string,
+        availableLocations?: any[]
+    ) {
         const player = this.players.find((player) => player.userId === playerId);
         if (player) {
             player.shipsLocation = ships;
@@ -316,7 +326,6 @@ export class InMemoryDB {
 
     disqualification(playerId: number) {
         // check if someone DC'd if he was in the game
-        
     }
 
     gameEnded(gameId: number, playerId: number, enemyId: number): void {
@@ -344,7 +353,6 @@ export class InMemoryDB {
         this.waitingRooms = this.waitingRooms.filter((room) => room.room !== gameId);
         this.playersTurns = this.playersTurns.filter((room) => room.gameId !== gameId);
         this.kills = this.kills.filter((game) => game.gameId !== gameId);
-
     }
 
     userLeft(userId: number, botId: number): void {
@@ -359,7 +367,6 @@ export class InMemoryDB {
             }
         });
     }
-
 
     setGameWithBot(playerId: number) {
         const currentPlayerData = this.players.find((player) => player.userId === playerId);
@@ -380,4 +387,3 @@ export class InMemoryDB {
     //     console.log('this.kills', this.kills);
     // }
 }
-

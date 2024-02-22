@@ -19,7 +19,12 @@ export function checkAttack(positionX: number, positionY: number, playerId: numb
     return result;
 }
 
-export function shootAround(targetPositions: any[], clients: any, player: number, enemy: number, bot: "bot-turn" | "non-bot" | "human-turn") {
+export function shootAround(
+    targetPositions: any[],
+    player: number,
+    enemy: number,
+    bot: 'bot-turn' | 'non-bot' | 'human-turn'
+) {
     for (let i = 0; i < targetPositions.length; i += 1) {
         const emptyX = targetPositions[i].x;
         const emptyY = targetPositions[i].y;
@@ -30,7 +35,8 @@ export function shootAround(targetPositions: any[], clients: any, player: number
                     x: emptyX,
                     y: emptyY,
                 },
-                player
+                player,
+                enemy
             );
             if (bot === 'bot-turn') {
                 // this is bot's turn end player is the enemy
@@ -115,7 +121,8 @@ export function checkHit(xPos: number, yPos: number, playerId: number, enemyId: 
             x: xPos,
             y: yPos,
         },
-        playerId
+        playerId,
+        enemyId
     );
     return result;
 }
