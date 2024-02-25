@@ -32,16 +32,18 @@ function makeShipDestroyed(
     botMoove?: boolean
 ) {
     for (let i = 0; i < destroyedShip.length; i += 1) {
-        const attackResponse = destroyShip(destroyedShip[i].x, destroyedShip[i].y, playerId);
         if (!botGame) {
+            const attackResponse = destroyShip(destroyedShip[i].x, destroyedShip[i].y, playerId);
             broadcastData('back', attackResponse, playerId);
             broadcastData('back', attackResponse, enemyId);
         } else {
             if (botMoove === true) {
-                broadcastData('back', attackResponse, enemyId);
-                const playersTurnEndResponse = turn(0, playerId);
-                broadcastData('back', playersTurnEndResponse, enemyId);
+                const attackResponse = destroyShip(destroyedShip[i].x, destroyedShip[i].y, enemyId);
+                broadcastData('back', attackResponse, playerId);
+                const playersTurnEndResponse = turn(0, enemyId);
+                broadcastData('back', playersTurnEndResponse, playerId);
             } else {
+                const attackResponse = destroyShip(destroyedShip[i].x, destroyedShip[i].y, playerId);
                 broadcastData('back', attackResponse, playerId);
                 const playersTurnEndResponse = turn(0, playerId);
                 broadcastData('back', playersTurnEndResponse, playerId);
