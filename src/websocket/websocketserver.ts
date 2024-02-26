@@ -1,65 +1,93 @@
-import { httpServer } from '../http_server';
 import WebSocket from 'ws';
-console.log('here');
+import { InMemoryDB } from './database/userDB';
+import { registerLogin } from './actions/registerLogIn/register';
+import { createGame } from './actions/rooms/createGame';
+import { broadcastData } from './broadcasts/broadcast';
+import { joinRoom } from './actions/rooms/joinRoom';
+import { placeShipsStartGame, startGameWithBot } from './actions/game/placeShipsStartGame';
+import { returnRandomNumber } from './functions/randomNum';
+import { attack } from './actions/game/battle';
+import { startSingleGame } from './actions/game/createSingleRoom';
+import { disqualificationOrDisconnect } from './actions/game/disqualification';
+
+// import { alertMessage } from './error';
+
 export const wss = new WebSocket.Server({ port: 3000 });
 let clients = new Array();
-let index = 0;
-
-
+export const db = new InMemoryDB();
+export const maxGameNumber: number = 5;
+export const maxIdNumbers = 100000;
+console.log('WebSocket Server established at port 3000');
 
 wss.on('connection', (ws, request) => {
-
     clients.push(ws);
+    let botId = returnRandomNumber(maxIdNumbers); // Generating new bot id // remove from db when logout or dc!!!!!!!!!!!!!!!
+    while (db.getUsername(botId)) {
+        // Checking for duplicate ID
+        botId = returnRandomNumber(maxIdNumbers);
+    }
+    db.saveUsersData(botId, 'bot');
 
-    ws.on('message', (message: any) => {
+    let playerTempId = returnRandomNumber(maxIdNumbers); // Generating new game number
+    while (db.getUsername(playerTempId)) {
+        // Checking for duplicate ID
+        playerTempId = returnRandomNumber(maxIdNumbers);
+    }
+    let playerId = playerTempId;
+    const zeroId = 0;
 
-        const bufferData = Buffer.from(message);
-        const stringData = bufferData.toString('utf8');
-        const stringDataJson = JSON.parse(stringData);
-        const userData = JSON.parse(stringDataJson.data);
-        const typeOfRequest = stringDataJson.type;
-        const userName = userData.name;
-        const userPassword = userData.password;
-        const userId = stringDataJson.id;
+    ws.on('message', async (message: any, isBinary) => {
+        const stringData = isBinary ? Buffer.from(message).toString('utf8') : message.toString();
+        const jsonData = JSON.parse(stringData);
+        const typeOfRequest = jsonData.type;
 
-        console.log('RequestType:', typeOfRequest);
-        console.log('Username:', userName);
-        console.log('Usernames password:', userPassword);
+        console.log(`Received the command ${typeOfRequest}`);
 
-        function loginResponseObject(type: string, name: string, index: number, error: boolean, errorText: string, userId: number) {
-          return {
-            type: type,
-            data: JSON.stringify({
-              name: name,
-              index: index,
-              error: error,
-              errorText: errorText
-            }),
-            id: userId
-          };
+        if (typeOfRequest === 'reg') {
+            playerId = registerLogin(jsonData, clients, zeroId, playerTempId, ws);
         }
-        
 
-        const responseObject = loginResponseObject(typeOfRequest, userName, index, false, "", userId);
-        const stringifiedResponseObject = JSON.stringify(responseObject);
-    
-        function broadcastToClients(data: string) {
-          wss.clients.forEach(function each(client) {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(data);
+        if (typeOfRequest === 'create_room') {
+            createGame(maxGameNumber, clients, zeroId);
+        }
+
+        if (typeOfRequest === 'add_user_to_room') {
+            joinRoom(jsonData, playerId, clients, zeroId);
+        }
+
+        if (typeOfRequest === 'add_ships') {
+            const userData = db.getUsersData(playerId);
+            if (userData) {
+                if (userData.playWithBot === true) {
+                    console.log(`Result: Game with bot was started`);
+                    startGameWithBot(jsonData, playerId, zeroId, clients, botId);
+                    // botShips = generateShips();
+                } else {
+                    placeShipsStartGame(jsonData, playerId, zeroId, clients);
+                }
             }
-          });
         }
 
-        // Received message: {"type":"reg","data":"{\"name\":\"fffff\",\"password\":\"fffff\"}","id":0}
-        broadcastToClients(stringifiedResponseObject);
+        if (typeOfRequest === 'randomAttack') {
+            attack(jsonData, playerId, zeroId, clients, 'random');
+        }
 
+        if (typeOfRequest === 'attack') {
+            attack(jsonData, playerId, zeroId, clients, 'manual');
+        }
+
+        if (typeOfRequest === 'single_play') {
+            startSingleGame(playerId, botId, zeroId);
+        }
+        // End of messaging
     });
-
     ws.on('close', () => {
         // Handle WebSocket connection close
-        var position = clients.indexOf(ws);
-        clients.splice(position, 1);
+        const index = clients.indexOf(ws);
+        disqualificationOrDisconnect(playerId, clients);
+        db.userLeft(playerId, botId);
+        clients.splice(index, 1);
         console.log('WebSocket connection closed');
+        // db.testLeaveAndDc(); // for testing data removal
     });
 });
