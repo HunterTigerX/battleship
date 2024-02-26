@@ -58,6 +58,7 @@ export function registerLogin(
         broadcastData('not-playing', updateRoomResponse);
 
         db.updateUsersData(returnId, client);
+        console.log('Result: User logged in')
     }
 
     return returnId;

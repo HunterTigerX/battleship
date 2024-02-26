@@ -41,6 +41,7 @@ export function placeShipsStartGame(jsonData: any, playerId: number, zeroId: num
 
             broadcastData('back', playersTurnEndResponse, playerTwoId);
             broadcastData('back', playersTurnEndResponse, playerId);
+            console.log(`Result: Game was started`);
         }
     } else {
         alertMessage('Waiting ships from second player');

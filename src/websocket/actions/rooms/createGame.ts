@@ -21,6 +21,7 @@ export function createGame(maxGameNumber: number, clients: any[], zeroId: number
         db.saveOpenGame(newGameData);
         const updateGameResponse = returnOpenGamesResponse(zeroId);
         broadcastData('not-playing', updateGameResponse);
+        console.log(`Result: Room was created`);
     } else {
         alertMessage(`Max rooms number reached. Current limit of rooms is ${maxGameNumber}`);
     }

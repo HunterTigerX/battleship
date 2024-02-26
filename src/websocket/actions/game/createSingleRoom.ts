@@ -40,4 +40,5 @@ export function startSingleGame(playerId: number, botId: number, zeroId: number)
 
     broadcastData('back', playerOneResponse, playerId);
     broadcastData('not-playing', updateGameResponse);
+    console.log(`Result: Game VS Bot was created. Waiting for the player to place his ships`);
 }

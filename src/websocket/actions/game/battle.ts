@@ -95,6 +95,7 @@ function attackByBot(
         // Ship is wounded, you can continue to shoot
         const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
         const playersTurnEndResponse = turn(zeroId, botId);
+
         broadcastData('back', attackResponse, humanOpponent);
         broadcastData('back', playersTurnEndResponse, humanOpponent);
         let [botPositionX, botPositionY] = generateRandomPosition(botId);
@@ -105,6 +106,7 @@ function attackByBot(
         const playerTurn = db.switchTurn(gameId); // we switch players
         const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
         const playersTurnEndResponse = turn(zeroId, playerTurn!);
+
         broadcastData('back', attackResponse, humanOpponent);
         broadcastData('back', playersTurnEndResponse, humanOpponent);
     } else {
@@ -297,10 +299,12 @@ function attackVsBot(
                 // We are hitting uniq target
                 const shotStatus: 'miss' | 'killed' | 'shot' = checkHit(positionX, positionY, playerId, botId);
                 let playerTurn: any = playerId;
+                console.log(`Result: Player attacked`);
                 if (shotStatus === 'shot') {
                     // Ship is wounded, you can continue to shoot
                     const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
                     const playersTurnEndResponse = turn(zeroId, playerTurn);
+
                     broadcastData('back', attackResponse, playerId);
                     broadcastData('back', playersTurnEndResponse, playerId);
                     if (typeOfAttack === 'random') {
@@ -312,6 +316,7 @@ function attackVsBot(
                     playerTurn = db.switchTurn(gameId); // we switch players
                     const attackResponse = attackShipsResponse(attackData, zeroId, shotStatus);
                     const playersTurnEndResponse = turn(zeroId, playerTurn);
+
                     broadcastData('back', attackResponse, playerId);
                     broadcastData('back', playersTurnEndResponse, playerId);
                     let [botPositionX, botPositionY] = generateRandomPosition(playerId);
@@ -370,6 +375,8 @@ export function attack(
 
     if (botId) {
         attackByBot(attackData, playerId, gameId, zeroId, clients, botId); // bot's move
+        console.log(`Reveived the command attack from bot`);
+        console.log(`Result: Bot attacked`);
     } else {
         const isPlayersTurn = db.checkPlayerTurn(gameId, playerId); // check if it's players turn
         if (isPlayersTurn) {
@@ -389,6 +396,7 @@ export function attack(
                         typeOfAttack,
                         currentRoomPlayers
                     );
+                    console.log(`Result: Player attacked another player`);
                 } else if (isPlayersTurn && currentRoomPlayers && isGameVsBot) {
                     // this is pve
                     attackVsBot(attackData, playerId, gameId, zeroId, clients, typeOfAttack, currentRoomPlayers);

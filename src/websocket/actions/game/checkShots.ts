@@ -45,12 +45,14 @@ export function shootAround(
                 const attackResponse = shootAroundTheShip(emptyX, emptyY, player);
                 broadcastData('back', attackResponse, enemy);
                 const playersTurnEndResponse = turn(0, player);
+
                 broadcastData('back', playersTurnEndResponse, enemy);
             } else if (bot === 'human-turn') {
                 // bot game, players turn
                 const attackResponse = shootAroundTheShip(emptyX, emptyY, player);
                 broadcastData('back', attackResponse, player);
                 const playersTurnEndResponse = turn(0, player);
+
                 broadcastData('back', playersTurnEndResponse, player);
             } else if (bot === 'non-bot') {
                 // player vs player game
@@ -58,6 +60,7 @@ export function shootAround(
                 broadcastData('back', attackResponse, player);
                 broadcastData('back', attackResponse, enemy);
                 const playersTurnEndResponse = turn(0, player);
+
                 broadcastData('back', playersTurnEndResponse, player);
                 broadcastData('back', playersTurnEndResponse, enemy);
             }
@@ -123,8 +126,10 @@ export function checkHit(xPos: number, yPos: number, playerId: number, enemyId: 
                     arrayOfEnemyShips[i].splice(j, 1);
                     if (arrayOfEnemyShips[i].length === 0) {
                         result = 'killed';
+                        console.log('Result: target was killed');
                     } else {
                         result = 'shot';
+                        console.log('Result: target was hit');
                     }
                     db.saveShipsLocation(arrayOfEnemyShips, enemyId);
                 }

@@ -17,7 +17,7 @@ let clients = new Array();
 export const db = new InMemoryDB();
 export const maxGameNumber: number = 5;
 export const maxIdNumbers = 100000;
-
+console.log('WebSocket Server established at port 3000');
 
 wss.on('connection', (ws, request) => {
     clients.push(ws);
@@ -41,7 +41,7 @@ wss.on('connection', (ws, request) => {
         const jsonData = JSON.parse(stringData);
         const typeOfRequest = jsonData.type;
 
-        console.log(typeOfRequest);
+        console.log(`Received the command ${typeOfRequest}`);
 
         if (typeOfRequest === 'reg') {
             playerId = registerLogin(jsonData, clients, zeroId, playerTempId, ws);
@@ -59,6 +59,7 @@ wss.on('connection', (ws, request) => {
             const userData = db.getUsersData(playerId);
             if (userData) {
                 if (userData.playWithBot === true) {
+                    console.log(`Result: Game with bot was started`);
                     startGameWithBot(jsonData, playerId, zeroId, clients, botId);
                     // botShips = generateShips();
                 } else {
@@ -80,12 +81,11 @@ wss.on('connection', (ws, request) => {
         }
         // End of messaging
     });
-
     ws.on('close', () => {
         // Handle WebSocket connection close
         const index = clients.indexOf(ws);
         disqualificationOrDisconnect(playerId, clients);
-        db.userLeft(playerId, botId)
+        db.userLeft(playerId, botId);
         clients.splice(index, 1);
         console.log('WebSocket connection closed');
         // db.testLeaveAndDc(); // for testing data removal

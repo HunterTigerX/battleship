@@ -28,3 +28,5 @@
 -   When playing vs bot, bot instantly strikes back when you miss. If you want to add a delay to bot shot after your miss, you can uncomment line 295 at src\websocket\actions\game\battle.ts and comment line 294 (where 2000 = 2s).
 
 -   When user is online, nobody can log in with his credentials, untill the user will log off.
+
+-   Since there are no format of the logs or more specific requirements about what information is requred to be shown when the server was started and as result to users command, so please don't judge strict for my implementation. It's probably not important, like animation when ship is destroyed, you can destroy every part of the ship or destroy only last part, both implementations are correct.

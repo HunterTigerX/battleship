@@ -37,6 +37,7 @@ export function joinRoom(jsonData: any, playerId: number, clients: any[], zeroId
             broadcastData('back', playerTwoResponse, playerId);
 
             broadcastData('not-playing', updateGameResponse);
+            console.log(`Player joined the room`);
         } else {
             alertMessage('This game is already full');
         }
