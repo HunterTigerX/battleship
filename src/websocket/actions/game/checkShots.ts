@@ -25,11 +25,13 @@ export function shootAround(
     enemy: number,
     bot: 'bot-turn' | 'non-bot' | 'human-turn'
 ) {
+    let shootedTargets = 0;
     for (let i = 0; i < targetPositions.length; i += 1) {
         const emptyX = targetPositions[i].x;
         const emptyY = targetPositions[i].y;
         if (!checkAttack(emptyX, emptyY, player)) {
             // not attacking attacked spaces, checking by comparing with hitted blocks by player
+            shootedTargets += 1;
             db.saveShotsLocation(
                 {
                     x: emptyX,
@@ -59,6 +61,19 @@ export function shootAround(
                 broadcastData('back', playersTurnEndResponse, player);
                 broadcastData('back', playersTurnEndResponse, enemy);
             }
+        }
+    }
+    if (shootedTargets === 0) {
+        if (bot === 'bot-turn') {
+            const playersTurnEndResponse = turn(0, player);
+            broadcastData('back', playersTurnEndResponse, enemy);
+        } else if (bot === 'human-turn') {
+            const playersTurnEndResponse = turn(0, player);
+            broadcastData('back', playersTurnEndResponse, player);
+        } else if (bot === 'non-bot') {
+            const playersTurnEndResponse = turn(0, player);
+            broadcastData('back', playersTurnEndResponse, player);
+            broadcastData('back', playersTurnEndResponse, enemy);
         }
     }
 }
